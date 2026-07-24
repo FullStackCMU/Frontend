@@ -1,0 +1,24 @@
+/* ===== Login ===== */
+
+.login-wrapper {
+  max-width: 25rem;
+  margin-inline: auto;
+  padding: 6vh 1rem 1.5rem;
+  animation: fadeIn 0.4s ease;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 0.4rem;
+}
+
+.login-header h1 {
+  color: var(--cr-primary);
+  margin-bottom: 0.2rem;
+}
+
+.login-safety-note {
+  text-align: center;
+  padding-top: 1.25rem;
+}
+

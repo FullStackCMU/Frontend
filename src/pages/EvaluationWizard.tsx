@@ -33,7 +33,7 @@ export default function EvaluationWizard({
   const [saved, setSaved] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  // ลำดับ: ตนเองก่อน แล้วตามด้วยเพื่อนตามลำดับสมาชิก
+  //ตนเองก่อน แล้วตามด้วยเพื่อนตามลำดับสมาชิก
   const targets = [
     { id: user.id, name: user.name, isSelf: true },
     ...group.members
@@ -61,7 +61,7 @@ export default function EvaluationWizard({
         setQuestions(res.data.data);
         const prog = await loadProgress();
 
-        // 3a) ข้ามไปคนแรกที่ยังไม่ completed
+        // ข้ามไปคนแรกที่ยังไม่ completed
         const firstIncomplete = targets.findIndex(
           (t) => !prog.find((p) => p.evaluateeId === t.id)?.completed
         );
@@ -73,9 +73,10 @@ export default function EvaluationWizard({
       }
     }
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [round.id, loadProgress]);
 
-  // โหลดคำตอบเดิมของคนที่กำลังประเมินอยู่ (ถ้าเคยตอบไว้)
+  // โหลดคำตอบเดิมของคนที่กำลังประเมินอยู่
   useEffect(() => {
     if (!current) return;
     setError("");
@@ -94,6 +95,7 @@ export default function EvaluationWizard({
         setDraft(d);
       })
       .catch(() => setDraft({}));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id, round.id]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -126,7 +128,7 @@ export default function EvaluationWizard({
       await loadProgress();
       setDraft({});
 
-      // 3c) แสดง flash "บันทึกแล้ว" ก่อนไปคนถัดไป
+      // แสดง flash "บันทึกแล้ว" ก่อนไปคนถัดไป
       setSaved(true);
       setTimeout(() => {
         setSaved(false);
@@ -139,11 +141,6 @@ export default function EvaluationWizard({
       setSaving(false);
     }
   }
-
-  // ─── นับจำนวนที่ทำแล้ว ───
-  const completedCount = targets.filter((t) =>
-    progress.find((p) => p.evaluateeId === t.id)?.completed
-  ).length;
 
   if (loading) return <article aria-busy="true">กำลังเตรียมแบบประเมิน</article>;
 
@@ -163,8 +160,8 @@ export default function EvaluationWizard({
       </div>
     );
 
-  // 3b) ถ้าประเมินครบทุกคน + ไม่ได้อยู่ใน edit mode
-  if (done && !editMode)
+
+  if (done || !current)
     return (
       <div className="wizard-container">
         <article className="wizard-done-card">
@@ -185,7 +182,7 @@ export default function EvaluationWizard({
               แก้ไขคำตอบ
             </button>
             <button style={{ width: "auto" }} onClick={onExit} data-cy="wizard-done">
-              กลับไปหน้ารอบประเมิน
+              กลับไปหน้าแบบประเมิน
             </button>
           </div>
         </article>
@@ -198,7 +195,7 @@ export default function EvaluationWizard({
         ← ออกจากแบบประเมิน (คำตอบที่ส่งแล้วถูกบันทึกไว้)
       </button>
 
-      {/* ข้อ 2: ถ้ากลุ่มใหญ่กว่า 5 → แถบ progress แทน pill */}
+      {/* ถ้ากลุ่มใหญ่กว่า 5 → แถบ progress แทน pill */}
       {targets.length > 5 ? (
         <div className="step-progress-wrap">
           <div className="step-progress">
@@ -226,7 +223,7 @@ export default function EvaluationWizard({
         </div>
       )}
 
-      {/* 3c) flash บันทึกสำเร็จ */}
+      {/* flash บันทึกสำเร็จ */}
       {saved && (
         <p className="status-toast" data-variant="success">
           ✓ บันทึกคำตอบสำหรับ {current?.isSelf ? "ตนเอง" : current?.name} เรียบร้อยแล้ว

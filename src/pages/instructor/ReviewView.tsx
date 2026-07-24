@@ -27,13 +27,14 @@ export default function ReviewView() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
-  // ข้อ 4: เปิดทีละคน
+  // เปิดทีละคน
   const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
     api
       .get<ApiResponse<Course[]>>("/courses")
-      .then((res) => setCourses(res.data.data));
+      .then((res) => setCourses(res.data.data))
+      .catch((err) => setMsg(getErrorMessage(err)));
   }, []);
 
   useEffect(() => {
@@ -46,10 +47,12 @@ export default function ReviewView() {
     Promise.all([
       api.get<ApiResponse<Round[]>>(`/rounds?courseId=${courseId}`),
       api.get<ApiResponse<Group[]>>(`/groups?courseId=${courseId}`),
-    ]).then(([r, g]) => {
-      setRounds(r.data.data);
-      setGroups(g.data.data);
-    });
+    ])
+      .then(([r, g]) => {
+        setRounds(r.data.data);
+        setGroups(g.data.data);
+      })
+      .catch((err) => setMsg(getErrorMessage(err)));
   }, [courseId]);
 
   async function loadData(rId: string, gId: string) {
@@ -118,7 +121,7 @@ export default function ReviewView() {
 
   const entries = Object.entries(byStudent);
 
-  // ข้อ 4a) สรุปจำนวน
+  // สรุปจำนวน
   const totalStudents = entries.length;
   const writtenCount = entries.filter(([sid]) =>
     summaries.find((s) => s.studentId === sid)
@@ -148,7 +151,7 @@ export default function ReviewView() {
           </label>
 
           <label>
-            รอบประเมิน
+            แบบประเมิน
             <select
               value={roundId}
               onChange={(e) => {
@@ -207,7 +210,7 @@ export default function ReviewView() {
         </article>
       )}
 
-      {/* ข้อ 4a) แถบสรุป */}
+      {/* แถบสรุป */}
       {!loading && entries.length > 0 && (
         <div className="review-summary-bar">
           <span>
@@ -221,7 +224,7 @@ export default function ReviewView() {
         </div>
       )}
 
-      {/* ข้อ 4b) Accordion — คลิกเปิดทีละคน */}
+      {/* Accordion — คลิกเปิดทีละคน */}
       {!loading &&
         entries.map(([studentId, group]) => {
           const { name, self, peers } = group;
@@ -241,7 +244,7 @@ export default function ReviewView() {
                 selfScores.length
               : null;
 
-          // ธงเตือน: เพื่อนให้คะแนนต่ำ หรือ ประเมินตนเองต่ำกว่าเพื่อนมาก
+          // ป้ายเตือน: เพื่อนให้คะแนนต่ำ หรือ ประเมินตนเองต่ำกว่าเพื่อนมาก
           const lowPeer = peerScores.some((p) => (p.scoreValue ?? 5) <= 2);
           const selfCritical =
             selfAvg !== null && peerAvg !== null && peerAvg - selfAvg >= 1.5;
@@ -249,17 +252,17 @@ export default function ReviewView() {
 
           const isOpen = openId === studentId;
 
-          // สถานะ badge
-          const statusBadge = existing
-            ? existing.isPublished
+          // สถานะ badge — ต้องมีเสมอทั้ง 3 กรณี ไม่ใช่ปล่อยว่างตอนยังไม่เขียนสรุป
+          const statusBadge = !existing
+            ? "badge-empty"
+            : existing.isPublished
               ? "badge-published"
-              : "badge-draft"
-            : null;
-          const statusText = existing
-            ? existing.isPublished
+              : "badge-draft";
+          const statusText = !existing
+            ? "ยังไม่เขียนสรุป"
+            : existing.isPublished
               ? "เผยแพร่แล้ว"
-              : "ฉบับร่าง"
-            : null;
+              : "ฉบับร่าง";
 
           return (
             <div key={studentId} data-cy={`review-${studentId}`}>
@@ -286,16 +289,19 @@ export default function ReviewView() {
                         : "ควรเข้าไปดูแล"}
                     </span>
                   )}
-                  {statusBadge && (
-                    <span className={`badge ${statusBadge}`}>
-                      {statusText}
-                    </span>
-                  )}
+                  <span className={`badge ${statusBadge}`}>
+                    {statusText}
+                  </span>
                 </div>
                 <div className="review-student-meta">
                   <span className="muted">
-                    เพื่อน {peerAvg?.toFixed(1) ?? "—"} · ตนเอง{" "}
-                    {selfAvg?.toFixed(1) ?? "—"}
+                    {peerAvg !== null
+                      ? `เพื่อน ${peerAvg.toFixed(1)}`
+                      : "ยังไม่มีเพื่อนประเมิน"}
+                    {" · "}
+                    {selfAvg !== null
+                      ? `ตนเอง ${selfAvg.toFixed(1)}`
+                      : "ยังไม่ประเมินตนเอง"}
                   </span>
                   <span className="muted">{isOpen ? "▲" : "▼"}</span>
                 </div>
@@ -330,15 +336,9 @@ export default function ReviewView() {
 
                   <div className="row-between">
                     <div>
-                      {existing && (
-                        <span
-                          className={`badge ${
-                            existing.isPublished ? "badge-published" : "badge-draft"
-                          }`}
-                        >
-                          {existing.isPublished ? "เผยแพร่แล้ว" : "ฉบับร่าง"}
-                        </span>
-                      )}
+                      <span className={`badge ${statusBadge}`}>
+                        {statusText}
+                      </span>
                     </div>
                     <div style={{ display: "flex", gap: "0.5rem" }}>
                       <button
