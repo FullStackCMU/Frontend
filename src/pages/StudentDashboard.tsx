@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
+import { Navigate, useMatch, useNavigate } from "react-router-dom";
 import { api, getErrorMessage } from "../lib/api";
 import CourseDetailView from "./student/CourseDetailView";
 import type { ApiResponse, Course, User } from "../types";
 
 /**
- * หน้าแรกฝั่งนักศึกษา — เลือกรายวิชา
- * เมื่อเลือกวิชาแล้วจะส่งต่อให้ CourseDetailView (แท็บแบบประเมิน/ฟีดแบ็ก)
+ * ฝั่งนักศึกษา
+ * - "/"            → เลือกรายวิชา (grid)
+ * - "/course/:id"  → ส่งต่อให้ CourseDetailView (แท็บแบบประเมิน/ฟีดแบ็ก)
  */
 export default function StudentDashboard({
   user,
@@ -15,9 +17,11 @@ export default function StudentDashboard({
   onLogout: () => void;
 }) {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const courseMatch = useMatch("/course/:courseId/*");
+  const courseId = courseMatch?.params.courseId;
 
   useEffect(() => {
     api
@@ -27,17 +31,16 @@ export default function StudentDashboard({
       .finally(() => setLoading(false));
   }, []);
 
-  if (selectedCourse) {
-    return (
-      <CourseDetailView
-        course={selectedCourse}
-        user={user}
-        onBack={() => setSelectedCourse(null)}
-        onLogout={onLogout}
-      />
-    );
+  // อยู่ที่ /course/:id → แสดงหน้าในรายวิชา
+  if (courseId) {
+    if (loading) return <article aria-busy="true">กำลังโหลด</article>;
+    const course = courses.find((c) => c.id === courseId);
+    // ไม่ได้ลงทะเบียน/id ผิด → กลับหน้าเลือกวิชา
+    if (!course) return <Navigate to="/" replace />;
+    return <CourseDetailView course={course} user={user} onLogout={onLogout} />;
   }
 
+  // หน้าเลือกรายวิชา (path "/")
   return (
     <div className="student-page">
       {/* Top bar */}
@@ -93,7 +96,7 @@ export default function StudentDashboard({
               <button
                 key={c.id}
                 className="course-card"
-                onClick={() => setSelectedCourse(c)}
+                onClick={() => navigate(`/course/${c.id}`)}
                 data-cy={`course-${c.id}`}
               >
                 <div className="course-card-code">{c.courseCode}</div>

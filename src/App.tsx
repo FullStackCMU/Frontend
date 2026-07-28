@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { tokenStore, userStore, UNAUTHORIZED_EVENT } from "./lib/api";
 import LoginPage from "./pages/LoginPage";
 import StudentDashboard from "./pages/StudentDashboard";
@@ -22,12 +23,29 @@ function App() {
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
   }, []);
 
-  if (!user) return <LoginPage onSuccess={setUser} />;
+  // ยังไม่ล็อกอิน → หน้า login อยู่ที่ /login (path อื่นเด้งมา /login)
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginPage onSuccess={setUser} />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
 
-  return user.role === "instructor" ? (
-    <InstructorDashboard user={user} onLogout={handleLogout} />
-  ) : (
-    <StudentDashboard user={user} onLogout={handleLogout} />
+  // ล็อกอินแล้ว → dashboard ตาม role (ภายในยังใช้ state nav เดิม — จะแตกเป็น route ในเฟสถัดไป)
+  const dashboard =
+    user.role === "instructor" ? (
+      <InstructorDashboard user={user} onLogout={handleLogout} />
+    ) : (
+      <StudentDashboard user={user} onLogout={handleLogout} />
+    );
+
+  return (
+    <Routes>
+      <Route path="/login" element={<Navigate to="/" replace />} />
+      <Route path="/*" element={dashboard} />
+    </Routes>
   );
 }
 

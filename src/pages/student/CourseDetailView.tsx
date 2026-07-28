@@ -1,22 +1,25 @@
-import { useState } from "react";
+import { useMatch, useNavigate } from "react-router-dom";
 import AppShell from "../../components/AppShell";
 import StudentRoundsView from "./StudentRoundsView";
 import FeedbackView from "./FeedbackView";
 import type { Course, User } from "../../types";
 
-/** หน้าในรายวิชาของนักศึกษา — sidebar layout สลับแท็บ แบบประเมิน / ฟีดแบ็ก */
+/**
+ * หน้าในรายวิชาของนักศึกษา — sidebar layout สลับแท็บจาก URL
+ * - /course/:id           → แท็บแบบประเมิน
+ * - /course/:id/feedback   → แท็บฟีดแบ็ก
+ */
 export default function CourseDetailView({
   course,
   user,
-  onBack,
   onLogout,
 }: {
   course: Course;
   user: User;
-  onBack: () => void;
   onLogout: () => void;
 }) {
-  const [active, setActive] = useState("rounds");
+  const navigate = useNavigate();
+  const active = useMatch("/course/:courseId/feedback") ? "feedback" : "rounds";
 
   const sidebarSlot = (
     <>
@@ -27,7 +30,7 @@ export default function CourseDetailView({
           {course.name}
         </div>
       </div>
-      <button className="sidebar-back-btn" onClick={onBack}>
+      <button className="sidebar-back-btn" onClick={() => navigate("/")}>
         ← เปลี่ยนรายวิชา
       </button>
     </>
@@ -42,7 +45,13 @@ export default function CourseDetailView({
         { key: "feedback", label: "ฟีดแบ็กจากอาจารย์" },
       ]}
       active={active}
-      onNavigate={setActive}
+      onNavigate={(key) =>
+        navigate(
+          key === "feedback"
+            ? `/course/${course.id}/feedback`
+            : `/course/${course.id}`
+        )
+      }
       slot={sidebarSlot}
     >
       <h3 className="page-heading">{course.name}</h3>

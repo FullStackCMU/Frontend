@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Navigate, useMatch, useNavigate } from "react-router-dom";
 import { api, getErrorMessage } from "../../lib/api";
 import EvaluationWizard from "../EvaluationWizard";
 import type {
@@ -20,15 +21,36 @@ export default function StudentRoundsView({
 }) {
   const [rounds, setRounds] = useState<Round[]>([]);
   const [group, setGroup] = useState<Group | null>(null);
-  const [activeRound, setActiveRound] = useState<Round | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   // 3d) progress ของแต่ละรอบ: roundId → Progress[]
   const [progressMap, setProgressMap] = useState<Record<string, Progress[]>>({});
+  const navigate = useNavigate();
+  const roundMatch = useMatch("/course/:courseId/round/:roundId");
+  const activeRoundId = roundMatch?.params.roundId;
+
+  const loadProgress = useCallback(async (rnds: Round[], grp: Group) => {
+    const results = await Promise.all(
+      rnds.map(async (round) => {
+        try {
+          const res = await api.get<ApiResponse<Progress[]>>(
+            `/answers/progress?roundId=${round.id}&groupId=${grp.id}`
+          );
+          return [round.id, res.data.data] as const;
+        } catch {
+          return [round.id, [] as Progress[]] as const;
+        }
+      })
+    );
+    const map: Record<string, Progress[]> = {};
+    results.forEach(([id, prog]) => {
+      map[id] = prog;
+    });
+    setProgressMap(map);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
-    setActiveRound(null);
     Promise.all([
       api.get<ApiResponse<Round[]>>(`/rounds?courseId=${course.id}`),
       api.get<ApiResponse<Group | null>>(`/groups/my?courseId=${course.id}`),
@@ -36,61 +58,34 @@ export default function StudentRoundsView({
       .then(async ([r, g]) => {
         setRounds(r.data.data);
         setGroup(g.data.data);
-        // โหลด progress ของทุกรอบ (ถ้ามี group)
-        if (g.data.data) {
-          const map: Record<string, Progress[]> = {};
-          await Promise.all(
-            r.data.data.map(async (round) => {
-              try {
-                const res = await api.get<ApiResponse<Progress[]>>(
-                  `/answers/progress?roundId=${round.id}&groupId=${g.data.data!.id}`
-                );
-                map[round.id] = res.data.data;
-              } catch {
-                map[round.id] = [];
-              }
-            })
-          );
-          setProgressMap(map);
-        }
+        if (g.data.data) await loadProgress(r.data.data, g.data.data);
       })
       .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setLoading(false));
-  }, [course.id]);
+  }, [course.id, loadProgress]);
 
   if (loading) return <article aria-busy="true">กำลังโหลด</article>;
   if (error) return <article className="status-toast">{error}</article>;
 
-  if (activeRound && group)
-    return (
-      <EvaluationWizard
-        round={activeRound}
-        group={group}
-        user={user}
-        onExit={() => {
-          setActiveRound(null);
-          // รีโหลด progress เมื่อกลับจาก wizard
-          if (group) {
-            Promise.all(
-              rounds.map(async (round) => {
-                try {
-                  const res = await api.get<ApiResponse<Progress[]>>(
-                    `/answers/progress?roundId=${round.id}&groupId=${group.id}`
-                  );
-                  return [round.id, res.data.data] as const;
-                } catch {
-                  return [round.id, [] as Progress[]] as const;
-                }
-              })
-            ).then((results) => {
-              const map: Record<string, Progress[]> = {};
-              results.forEach(([id, prog]) => { map[id] = prog; });
-              setProgressMap(map);
-            });
-          }
-        }}
-      />
-    );
+  // ทำแบบประเมิน — เปิดจาก URL /course/:id/round/:roundId
+  if (activeRoundId) {
+    const round = rounds.find((r) => r.id === activeRoundId);
+    if (group && round)
+      return (
+        <EvaluationWizard
+          round={round}
+          group={group}
+          user={user}
+          onExit={() => {
+            navigate(`/course/${course.id}`);
+            // รีโหลด progress เมื่อกลับจาก wizard
+            loadProgress(rounds, group);
+          }}
+        />
+      );
+    // ไม่มีกลุ่ม / หา round ไม่เจอ (id ผิด) → กลับหน้ารายการ
+    return <Navigate to={`/course/${course.id}`} replace />;
+  }
 
   if (!group)
     return (
@@ -156,7 +151,7 @@ export default function StudentRoundsView({
                 <button
                   style={{ width: "auto" }}
                   className={allDone ? "secondary outline" : undefined}
-                  onClick={() => setActiveRound(r)}
+                  onClick={() => navigate(`/course/${course.id}/round/${r.id}`)}
                   data-cy={`enter-round-${r.id}`}
                 >
                   {allDone
