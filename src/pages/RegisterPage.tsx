@@ -3,26 +3,28 @@ import { Link } from "react-router-dom";
 import { api, tokenStore, userStore, getErrorMessage } from "../lib/api";
 import type { ApiResponse, User } from "../types";
 
-export default function LoginPage({
+/** สมัครบัญชีนักศึกษา — สมัครสำเร็จแล้วล็อกอินให้อัตโนมัติ (role student เท่านั้น) */
+export default function RegisterPage({
   onSuccess,
 }: {
   onSuccess: (u: User) => void;
 }) {
   const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!username || !password) return;
+    if (!username || !name || !password) return;
 
     setLoading(true);
     setError("");
     try {
       const res = await api.post<ApiResponse<{ token: string; user: User }>>(
-        "/auth/login",
-        { username, password }
+        "/auth/register",
+        { username, name, password }
       );
       const { token, user } = res.data.data;
       tokenStore.set(token);
@@ -39,11 +41,22 @@ export default function LoginPage({
     <div className="login-wrapper">
       <hgroup className="login-header">
         <h1>CollabReflect</h1>
-        <p className="safety-hint">พื้นที่ปลอดภัยสำหรับสะท้อนการทำงานเป็นทีม</p>
+        <p className="safety-hint">สมัครบัญชีนักศึกษาเพื่อเริ่มใช้งาน</p>
       </hgroup>
 
       <article>
         <form onSubmit={handleSubmit}>
+          <label>
+            ชื่อ-นามสกุล
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
+              data-cy="input-reg-name"
+            />
+          </label>
+
           <label>
             รหัสนักศึกษา / ชื่อผู้ใช้
             <input
@@ -51,44 +64,32 @@ export default function LoginPage({
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
-              data-cy="input-username"
+              data-cy="input-reg-username"
             />
           </label>
 
           <label>
-            รหัสผ่าน
+            รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              data-cy="input-password"
+              autoComplete="new-password"
+              data-cy="input-reg-password"
             />
           </label>
 
-          {error && (
-            <p className="status-toast">{error}</p>
-          )}
+          {error && <p className="status-toast">{error}</p>}
 
-          <button type="submit" aria-busy={loading} data-cy="submit-login">
-            {loading ? "กำลังเข้าสู่ระบบ" : "เข้าสู่ระบบ"}
+          <button type="submit" aria-busy={loading} data-cy="submit-register">
+            {loading ? "กำลังสมัคร" : "สมัครบัญชี"}
           </button>
         </form>
 
         <p className="safety-hint" style={{ marginTop: "1rem", textAlign: "center" }}>
-          ยังไม่มีบัญชี?{" "}
-          <Link to="/register" data-cy="link-register">
-            สมัครนักศึกษา
-          </Link>
+          มีบัญชีอยู่แล้ว? <Link to="/login" data-cy="link-login">เข้าสู่ระบบ</Link>
         </p>
       </article>
-
-      <div className="login-safety-note">
-        <p className="safety-hint">
-          ความคิดเห็นที่คุณเขียนจะถูกส่งให้อาจารย์พิจารณาก่อนเสมอ
-          เพื่อนร่วมทีมจะไม่เห็นข้อความโดยตรง
-        </p>
-      </div>
     </div>
   );
 }

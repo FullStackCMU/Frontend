@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { tokenStore, userStore, UNAUTHORIZED_EVENT } from "./lib/api";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import StudentDashboard from "./pages/StudentDashboard";
 import InstructorDashboard from "./pages/InstructorDashboard";
 import type { User } from "./types";
@@ -28,6 +29,7 @@ function App() {
     return (
       <Routes>
         <Route path="/login" element={<LoginPage onSuccess={setUser} />} />
+        <Route path="/register" element={<RegisterPage onSuccess={setUser} />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
@@ -44,6 +46,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Navigate to="/" replace />} />
+      <Route path="/register" element={<Navigate to="/" replace />} />
       <Route path="/*" element={dashboard} />
     </Routes>
   );
