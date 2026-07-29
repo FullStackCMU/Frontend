@@ -15,7 +15,6 @@ function App() {
     setUser(null);
   }
 
-  // token หมดอายุ (401) → interceptor ล้าง storage แล้วยิง event มา sync user state
   useEffect(() => {
     function onUnauthorized() {
       setUser(null);

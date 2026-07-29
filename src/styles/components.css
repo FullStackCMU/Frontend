@@ -1,9 +1,29 @@
+/* ===== safety-hint แบบมีไอคอนนำ ===== */
+.safety-hint-icon {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.safety-hint-icon svg {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  color: var(--cr-secondary);
+}
+
 /* ===== Empty state ===== */
 
 .empty-state {
   text-align: center;
   padding: 2.5rem 1.5rem;
   animation: fadeIn 0.35s ease;
+}
+
+.empty-state-art {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.85rem;
 }
 
 .empty-state-icon {

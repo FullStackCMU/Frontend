@@ -2,13 +2,10 @@ import { useEffect, useState } from "react";
 import { Navigate, useMatch, useNavigate } from "react-router-dom";
 import { api, getErrorMessage } from "../lib/api";
 import CourseDetailView from "./student/CourseDetailView";
+import Icon from "../components/Icon";
+import { EmptyCoursesArt } from "../components/illustrations";
 import type { ApiResponse, Course, User } from "../types";
 
-/**
- * ฝั่งนักศึกษา
- * - "/"            → เลือกรายวิชา (grid)
- * - "/course/:id"  → ส่งต่อให้ CourseDetailView (แท็บแบบประเมิน/ฟีดแบ็ก)
- */
 export default function StudentDashboard({
   user,
   onLogout,
@@ -61,7 +58,8 @@ export default function StudentDashboard({
             onClick={onLogout}
             data-cy="logout"
           >
-            ออกจากระบบ
+            <Icon name="logout" size={15} />
+            <span>ออกจากระบบ</span>
           </button>
         </div>
       </header>
@@ -81,7 +79,9 @@ export default function StudentDashboard({
 
         {!loading && !error && courses.length === 0 && (
           <article className="empty-state">
-            <span className="empty-state-icon">📚</span>
+            <div className="empty-state-art">
+              <EmptyCoursesArt />
+            </div>
             <h4>ยังไม่ได้ลงทะเบียนวิชาใด</h4>
             <p>
               ติดต่ออาจารย์ผู้สอนเพื่อลงทะเบียนเข้าสู่รายวิชา
@@ -101,14 +101,20 @@ export default function StudentDashboard({
               >
                 <div className="course-card-code">{c.courseCode}</div>
                 <div className="course-card-name">{c.name}</div>
-                <div className="course-card-arrow">→</div>
+                <div className="course-card-arrow">
+                  <Icon name="arrow-right" size={18} />
+                </div>
               </button>
             ))}
           </div>
         )}
 
-        <footer className="safety-hint" style={{ paddingTop: "3rem" }}>
-          ความคิดเห็นทุกข้อจะผ่านการพิจารณาของอาจารย์ก่อนเผยแพร่เสมอ
+        <footer
+          className="safety-hint safety-hint-icon"
+          style={{ paddingTop: "3rem", justifyContent: "center" }}
+        >
+          <Icon name="shield" size={16} />
+          <span>ความคิดเห็นทุกข้อจะผ่านการพิจารณาของอาจารย์ก่อนเผยแพร่เสมอ</span>
         </footer>
       </main>
     </div>
