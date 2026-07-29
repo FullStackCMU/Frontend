@@ -1,0 +1,61 @@
+/* ===== Global typography ===== */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--cr-bg);
+  color: var(--cr-text);
+  font-family: "IBM Plex Sans Thai", sans-serif;
+  line-height: 1.75;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "IBM Plex Sans Thai", sans-serif;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ===== Animations ===== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Global focus ===== */
+
+:focus-visible {
+  outline: 3px solid var(--cr-secondary);
+  outline-offset: 2px;
+}
+

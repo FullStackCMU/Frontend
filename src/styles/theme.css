@@ -1,0 +1,18 @@
+/* ตัวแปรสี/โทเคนดีไซน์ */
+@import "./tokens.css";
+/* typography, animation, focus ระดับ global */
+@import "./base.css";
+/* โครงหน้าจอ: sidebar + เนื้อหา + จอแคบ */
+@import "./layout.css";
+/* ชิ้นส่วน UI ที่ใช้ซ้ำ: empty state, toast, badge, คะแนน 1-5, step bar */
+@import "./components.css";
+/* หน้าแบบประเมิน (EvaluationWizard) */
+@import "./wizard.css";
+/* หน้า login */
+@import "./login.css";
+/* หน้าฝั่งนักศึกษา (topbar/hero/course card) */
+@import "./student.css";
+/* accordion หน้าพิจารณาฟีดแบ็กของอาจารย์ */
+@import "./review.css";
+/* @media ทั้งหมด: mobile + prefers-reduced-motion (ต้องอยู่ท้ายสุด) */
+@import "./responsive.css";

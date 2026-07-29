@@ -1,0 +1,69 @@
+/* ===== Review accordion (ข้อ 4) ===== */
+
+.review-summary-bar {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--cr-secondary) 8%, var(--cr-bg));
+  border: 1px solid var(--cr-border);
+  font-size: 0.85rem;
+  color: var(--cr-text);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.review-student-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--cr-border);
+  border-radius: 8px;
+  margin-bottom: 0.4rem;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.review-student-row:hover {
+  border-color: var(--cr-secondary);
+}
+
+.review-student-row[data-open="true"] {
+  border-color: var(--cr-primary);
+  background: color-mix(in srgb, var(--cr-primary) 4%, #fff);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-bottom: 0;
+}
+
+.review-student-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+  /* .review-student-row มี role="button" ซึ่งโดน Pico ตั้ง color เป็น
+     --pico-primary-inverse (ขาว) ให้เข้ากับพื้นปุ่มเข้ม แต่แถวนี้พื้นขาวเอง
+     เลยต้องกำหนด color เอง ไม่งั้นตัวอักษรจะขาวบนขาว มองไม่เห็น */
+  color: var(--cr-text);
+}
+
+.review-student-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.review-detail {
+  border: 1px solid var(--cr-primary);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 1.25rem 1rem;
+  margin-bottom: 0.4rem;
+  background: #fff;
+  animation: fadeIn 0.25s ease;
+}
+

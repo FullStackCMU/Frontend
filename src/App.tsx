@@ -1,155 +1,55 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { type TodoItem } from "./types";
-import dayjs from "dayjs";
-function App() {
-  const [todos, setTodos] = useState<TodoItem[]>([]);
-  const [inputText, setInputText] = useState("");
-  const [mode, setMode] = useState<"ADD" | "EDIT">("ADD");
-  const [curTodoId, setCurTodoId] = useState("");
+import { Navigate, Route, Routes } from "react-router-dom";
+import { tokenStore, userStore, UNAUTHORIZED_EVENT } from "./lib/api";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import StudentDashboard from "./pages/StudentDashboard";
+import InstructorDashboard from "./pages/InstructorDashboard";
+import type { User } from "./types";
 
-  async function fetchData() {
-    const res = await axios.get<TodoItem[]>("api/todo");
-    setTodos(res.data);
+function App() {
+  const [user, setUser] = useState<User | null>(() => userStore.get());
+
+  function handleLogout() {
+    tokenStore.clear();
+    setUser(null);
   }
 
+  // token หมดอายุ (401) → interceptor ล้าง storage แล้วยิง event มา sync user state
   useEffect(() => {
-    fetchData();
+    function onUnauthorized() {
+      setUser(null);
+    }
+    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
   }, []);
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setInputText(e.target.value);
+  // ยังไม่ล็อกอิน → หน้า login อยู่ที่ /login (path อื่นเด้งมา /login)
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginPage onSuccess={setUser} />} />
+        <Route path="/register" element={<RegisterPage onSuccess={setUser} />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
   }
 
-  function handleSubmit() {
-    if (!inputText) return;
-    if (mode === "ADD") {
-      axios
-        .request({
-          url: "/api/todo",
-          method: "put",
-          data: { todoText: inputText },
-        })
-        .then(() => {
-          setInputText("");
-        })
-        .then(fetchData)
-        .catch((err) => alert(err));
-    } else {
-      axios
-        .request({
-          url: "/api/todo",
-          method: "patch",
-          data: { id: curTodoId, todoText: inputText },
-        })
-        .then(() => {
-          setInputText("");
-          setMode("ADD");
-          setCurTodoId("");
-        })
-        .then(fetchData)
-        .catch((err) => alert(err));
-    }
-  }
+  // ล็อกอินแล้ว → dashboard ตาม role (ภายในยังใช้ state nav เดิม — จะแตกเป็น route ในเฟสถัดไป)
+  const dashboard =
+    user.role === "instructor" ? (
+      <InstructorDashboard user={user} onLogout={handleLogout} />
+    ) : (
+      <StudentDashboard user={user} onLogout={handleLogout} />
+    );
 
-  function handleDelete(id: string) {
-    axios
-      .delete("/api/todo", { data: { id } })
-      .then(fetchData)
-      .then(() => {
-        setMode("ADD");
-        setInputText("");
-      })
-      .catch((err) => alert(err));
-  }
-
-  function handleCancel() {
-    setMode("ADD");
-    setInputText("");
-    setCurTodoId("");
-  }
   return (
-    <div className="container">
-      <header>
-        <h1>Todo App</h1>
-      </header>
-      <main>
-        <div style={{ display: "flex", alignItems: "start" }}>
-          <input
-            type="text"
-            onChange={handleChange}
-            value={inputText}
-            data-cy="input-text"
-          />
-          <button onClick={handleSubmit} data-cy="submit">
-            {mode === "ADD" ? "Submit" : "Update"}
-          </button>
-          {mode === "EDIT" && (
-            <button onClick={handleCancel} className="secondary">
-              Cancel
-            </button>
-          )}
-        </div>
-        <div data-cy="todo-item-wrapper">
-          {todos.sort(compareDate).map((item, idx) => {
-            const { date, time } = formatDateTime(item.createdAt);
-            const text = item.todoText;
-            return (
-              <article
-                key={item.id}
-                style={{
-                  display: "flex",
-                  gap: "0.5rem",
-                }}
-              >
-                <div>({idx + 1})</div>
-                <div>📅{date}</div>
-                <div>⏰{time}</div>
-                <div data-cy="todo-item-text">📰{text}</div>
-                <div
-                  style={{ cursor: "pointer" }}
-                  onClick={() => {
-                    setMode("EDIT");
-                    setCurTodoId(item.id);
-                    setInputText(item.todoText);
-                  }}
-                  data-cy="todo-item-update"
-                >
-                  {curTodoId !== item.id ? "🖊️" : "✍🏻"}
-                </div>
-
-                {mode === "ADD" && (
-                  <div
-                    style={{ cursor: "pointer" }}
-                    onClick={() => handleDelete(item.id)}
-                    data-cy="todo-item-delete"
-                  >
-                    🗑️
-                  </div>
-                )}
-              </article>
-            );
-          })}
-        </div>
-      </main>
-    </div>
+    <Routes>
+      <Route path="/login" element={<Navigate to="/" replace />} />
+      <Route path="/register" element={<Navigate to="/" replace />} />
+      <Route path="/*" element={dashboard} />
+    </Routes>
   );
 }
 
 export default App;
-
-function formatDateTime(dateStr: string) {
-  if (!dayjs(dateStr).isValid()) {
-    return { date: "N/A", time: "N/A" };
-  }
-  const dt = dayjs(dateStr);
-  const date = dt.format("D/MM/YY");
-  const time = dt.format("HH:mm");
-  return { date, time };
-}
-
-function compareDate(a: TodoItem, b: TodoItem) {
-  const da = dayjs(a.createdAt);
-  const db = dayjs(b.createdAt);
-  return da.isBefore(db) ? -1 : 1;
-}

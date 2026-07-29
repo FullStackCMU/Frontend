@@ -1,0 +1,85 @@
+/* ===== Wizard container — โฟกัสเดียว สงบ ===== */
+
+.wizard-container {
+  max-width: 38rem;
+  margin-inline: auto;
+  animation: fadeIn 0.35s ease;
+}
+
+.wizard-container .question-block {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--cr-border);
+}
+
+.wizard-container .question-block:last-of-type {
+  border-bottom: none;
+}
+
+.wizard-container .question-block strong {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.wizard-container textarea {
+  margin-top: 0.4rem;
+}
+
+.wizard-container .note-box {
+  padding: 1rem 1.25rem;
+  font-size: 0.9rem;
+}
+
+/* Wizard done card */
+.wizard-done-card {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  animation: fadeIn 0.4s ease;
+}
+
+.wizard-done-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.85rem;
+  display: block;
+}
+
+.wizard-done-card h4 {
+  color: var(--cr-positive);
+  margin-bottom: 0.4rem;
+}
+
+.wizard-done-card p {
+  max-width: 24rem;
+  margin-inline: auto;
+  color: var(--cr-muted);
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+}
+
+/* Legacy question-block (non-wizard) */
+.question-block {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--cr-border);
+}
+
+.question-block:last-of-type {
+  border-bottom: none;
+}
+
+.self-tag {
+  background: color-mix(in srgb, var(--cr-secondary) 15%, #fff);
+  border: 1px solid var(--cr-secondary);
+  color: var(--cr-secondary);
+}
+
+.card-link {
+  cursor: pointer;
+  border: 1px solid var(--cr-border);
+  transition: border-color 0.15s ease;
+}
+
+.card-link:hover {
+  border-color: var(--cr-secondary);
+}
+

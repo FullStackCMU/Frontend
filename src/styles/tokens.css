@@ -1,0 +1,49 @@
+/* ===== Design tokens =====
+   อ้างอิงรายงานจิตวิทยาสีเพื่อความปลอดภัยทางจิตใจ
+   ต้องเขียน selector ให้ specificity สูงกว่า :root:not([data-theme=dark]) ของ Pico */
+:root,
+:root:not([data-theme="dark"]),
+[data-theme="light"] {
+  --cr-primary: #2b4c59;
+  --cr-primary-dark: #23404b;
+  --cr-secondary: #4a7c8c;
+  --cr-positive: #4e9f6d;
+  --cr-bg: #fcfbfa;
+
+  --cr-flag: #e28743;
+  --cr-growth: #f28b82;
+  --cr-ai-note: #aecbfa;
+  --cr-muted: #7f8c8d;
+
+  --cr-text: #2b3a42;
+  --cr-border: #e3e8ea;
+
+  --pico-background-color: #fcfbfa;
+  --pico-color: #2b3a42;
+  --pico-muted-color: #7f8c8d;
+
+  --pico-primary: #2b4c59;
+  --pico-primary-background: #2b4c59;
+  --pico-primary-border: #2b4c59;
+  --pico-primary-hover: #23404b;
+  --pico-primary-hover-background: #23404b;
+  --pico-primary-hover-border: #23404b;
+  --pico-primary-inverse: #fff;
+  --pico-primary-focus: rgba(74, 124, 140, 0.35);
+  --pico-primary-underline: rgba(43, 76, 89, 0.5);
+
+  --pico-secondary: #4a7c8c;
+  --pico-secondary-background: #4a7c8c;
+  --pico-secondary-border: #4a7c8c;
+  --pico-secondary-hover: #3d6a78;
+  --pico-secondary-hover-background: #3d6a78;
+  --pico-secondary-inverse: #fff;
+
+  --pico-border-radius: 8px;
+  --pico-form-element-focus-color: #4a7c8c;
+  --pico-card-box-shadow: 0 1px 3px rgba(43, 58, 66, 0.06);
+
+  --pico-font-family: "IBM Plex Sans Thai", sans-serif;
+  --pico-font-size: 85%;
+}
+
