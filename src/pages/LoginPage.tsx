@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api, tokenStore, userStore, getErrorMessage } from "../lib/api";
+import { SafeSpaceArt } from "../components/illustrations";
+import Icon from "../components/Icon";
 import type { ApiResponse, User } from "../types";
 
 export default function LoginPage({
@@ -37,6 +39,9 @@ export default function LoginPage({
 
   return (
     <div className="login-wrapper">
+      <div className="login-art">
+        <SafeSpaceArt />
+      </div>
       <hgroup className="login-header">
         <h1>CollabReflect</h1>
         <p className="safety-hint">พื้นที่ปลอดภัยสำหรับสะท้อนการทำงานเป็นทีม</p>
@@ -84,9 +89,12 @@ export default function LoginPage({
       </article>
 
       <div className="login-safety-note">
-        <p className="safety-hint">
-          ความคิดเห็นที่คุณเขียนจะถูกส่งให้อาจารย์พิจารณาก่อนเสมอ
-          เพื่อนร่วมทีมจะไม่เห็นข้อความโดยตรง
+        <p className="safety-hint safety-hint-icon">
+          <Icon name="shield" size={18} />
+          <span>
+            ความคิดเห็นที่คุณเขียนจะถูกส่งให้อาจารย์พิจารณาก่อนเสมอ
+            เพื่อนร่วมทีมจะไม่เห็นข้อความโดยตรง
+          </span>
         </p>
       </div>
     </div>
