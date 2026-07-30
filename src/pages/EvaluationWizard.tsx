@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, getErrorMessage } from "../lib/api";
 import type {
   Answer,
@@ -32,6 +32,8 @@ export default function EvaluationWizard({
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  // ผู้ใช้เริ่มตอบของคนปัจจุบันแล้วหรือยัง — กันคำตอบเดิมที่โหลดช้ามาทับสิ่งที่เพิ่งกรอก
+  const draftDirty = useRef(false);
 
   //ตนเองก่อน แล้วตามด้วยเพื่อนตามลำดับสมาชิก
   const targets = [
@@ -80,6 +82,16 @@ export default function EvaluationWizard({
   useEffect(() => {
     if (!current) return;
     setError("");
+    // เปลี่ยนคนที่ประเมิน = เริ่มนับใหม่ว่ายังไม่ได้แตะฟอร์ม
+    draftDirty.current = false;
+    let cancelled = false;
+
+    // ถ้าผู้ใช้เริ่มตอบไปแล้วระหว่างรอ response ห้ามเขียนทับคำตอบของเขา
+    const applyIfUntouched = (d: Draft) => {
+      if (cancelled || draftDirty.current) return;
+      setDraft(d);
+    };
+
     api
       .get<ApiResponse<Answer[]>>(
         `/answers/mine?roundId=${round.id}&evaluateeId=${current.id}`
@@ -92,9 +104,13 @@ export default function EvaluationWizard({
             textValue: a.textValue ?? undefined,
           };
         });
-        setDraft(d);
+        applyIfUntouched(d);
       })
-      .catch(() => setDraft({}));
+      .catch(() => applyIfUntouched({}));
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id, round.id]);
 
@@ -270,12 +286,13 @@ export default function EvaluationWizard({
                         className="score-dot"
                         data-level={n}
                         data-active={draft[q.id]?.scoreValue === n}
-                        onClick={() =>
+                        onClick={() => {
+                          draftDirty.current = true;
                           setDraft((p) => ({
                             ...p,
                             [q.id]: { ...p[q.id], scoreValue: n },
-                          }))
-                        }
+                          }));
+                        }}
                         aria-label={`คะแนน ${n}`}
                       >
                         {n}
@@ -287,12 +304,13 @@ export default function EvaluationWizard({
                 <textarea
                   rows={3}
                   value={draft[q.id]?.textValue ?? ""}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    draftDirty.current = true;
                     setDraft((p) => ({
                       ...p,
                       [q.id]: { ...p[q.id], textValue: e.target.value },
-                    }))
-                  }
+                    }));
+                  }}
                   placeholder="เขียนอย่างตรงไปตรงมาเพื่อช่วยให้ทีมพัฒนาต่อได้"
                   data-cy={`text-${q.id}`}
                 />

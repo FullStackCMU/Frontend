@@ -43,7 +43,7 @@ export default function LoginPage({
         <SafeSpaceArt />
       </div>
       <hgroup className="login-header">
-        <h1>CollabReflect</h1>
+        <h1>CollabReflectDDDD</h1>
         <p className="safety-hint">พื้นที่ปลอดภัยสำหรับสะท้อนการทำงานเป็นทีม</p>
       </hgroup>
 
