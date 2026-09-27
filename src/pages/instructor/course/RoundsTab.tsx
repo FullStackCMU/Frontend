@@ -1,36 +1,19 @@
 import { useEffect, useState } from "react";
-import { CalendarClock, Check, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarClock, Pencil, Plus, Trash2 } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { ConfirmModal } from "../../../components/ui/ConfirmModal";
 import { StatusPill } from "../../../components/ui/StatusPill";
 import { api, getErrorMessage } from "../../../lib/api";
-import { cn } from "../../../lib/cn";
-import { formatDateTime, formatRange } from "../../../lib/date";
+import { formatRange } from "../../../lib/date";
 import { getRoundStatus } from "../../../lib/status";
 import type { ApiResponse, CourseRound } from "../../../types";
 import EditRoundModal from "./EditRoundModal";
 import GenerateRoundsModal from "./GenerateRoundsModal";
+import ReleaseControls from "../ReleaseControls";
 
-type ReleaseKind = "scores" | "feedback";
-
-const RELEASE_TEXT: Record<ReleaseKind, { label: string; released: string; effect: string }> = {
-  scores: {
-    label: "คะแนน",
-    released: "เผยแพร่คะแนนแล้ว",
-    effect: "นักศึกษาจะเห็นคะแนนเฉลี่ยรายข้อของตัวเอง",
-  },
-  feedback: {
-    label: "ฟีดแบ็ก",
-    released: "เผยแพร่ฟีดแบ็กแล้ว",
-    effect: "นักศึกษาจะเห็นความเห็นจากเพื่อนร่วมกลุ่มแบบไม่ระบุชื่อ",
-  },
-};
-
-type Pending =
-  | { kind: "delete"; round: CourseRound }
-  | { kind: "release"; round: CourseRound; what: ReleaseKind; release: boolean };
+type Pending = { round: CourseRound } | null; // ยืนยันการลบรอบ
 
 function Progress({ submitted, total }: { submitted: number; total: number }) {
   const pct = total === 0 ? 0 : Math.round((submitted / total) * 100);
@@ -60,12 +43,12 @@ function RoundCard({
   round,
   onEdit,
   onDelete,
-  onRelease,
+  onUpdated,
 }: {
   round: CourseRound;
   onEdit: () => void;
   onDelete: () => void;
-  onRelease: (what: ReleaseKind, release: boolean) => void;
+  onUpdated: (rounds: CourseRound[]) => void;
 }) {
   const status = getRoundStatus(round);
   const released = !!(round.scoresReleasedAt || round.feedbackReleasedAt);
@@ -114,30 +97,8 @@ function RoundCard({
       </div>
 
       {canRelease && (
-        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
-          {(["scores", "feedback"] as const).map((what) => {
-            const at = what === "scores" ? round.scoresReleasedAt : round.feedbackReleasedAt;
-            const text = RELEASE_TEXT[what];
-            return at ? (
-              <div
-                key={what}
-                className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-1.5 pr-1.5 pl-3 text-xs text-emerald-700"
-              >
-                <Check size={13} className="shrink-0" />
-                <span>
-                  <span className="font-semibold">{text.released}</span>
-                  <span className="text-emerald-600"> · {formatDateTime(at)}</span>
-                </span>
-                <Button variant="ghost" size="sm" onClick={() => onRelease(what, false)}>
-                  ยกเลิก
-                </Button>
-              </div>
-            ) : (
-              <Button key={what} variant="secondary" size="sm" onClick={() => onRelease(what, true)}>
-                เผยแพร่{text.label}
-              </Button>
-            );
-          })}
+        <div className="border-t border-border pt-4">
+          <ReleaseControls round={round} onUpdated={onUpdated} />
         </div>
       )}
     </Card>
@@ -150,7 +111,7 @@ export default function RoundsTab({ courseId }: { courseId: string }) {
   const [error, setError] = useState("");
   const [generating, setGenerating] = useState(false);
   const [editing, setEditing] = useState<CourseRound | null>(null);
-  const [pending, setPending] = useState<Pending | null>(null);
+  const [pending, setPending] = useState<Pending>(null);
 
   useEffect(() => {
     api
@@ -169,12 +130,7 @@ export default function RoundsTab({ courseId }: { courseId: string }) {
 
   async function runPending() {
     if (!pending) return;
-    const res =
-      pending.kind === "delete"
-        ? await api.delete<ApiResponse<CourseRound[]>>(`/rounds/${pending.round.id}`)
-        : await api.patch<ApiResponse<CourseRound[]>>(`/rounds/${pending.round.id}/release`, {
-            [pending.what]: pending.release,
-          });
+    const res = await api.delete<ApiResponse<CourseRound[]>>(`/rounds/${pending.round.id}`);
     applyRounds(res.data.data);
   }
 
@@ -225,8 +181,8 @@ export default function RoundsTab({ courseId }: { courseId: string }) {
                 key={r.id}
                 round={r}
                 onEdit={() => setEditing(r)}
-                onDelete={() => setPending({ kind: "delete", round: r })}
-                onRelease={(what, release) => setPending({ kind: "release", round: r, what, release })}
+                onDelete={() => setPending({ round: r })}
+                onUpdated={applyRounds}
               />
             ))}
           </div>
@@ -244,7 +200,7 @@ export default function RoundsTab({ courseId }: { courseId: string }) {
 
       {editing && <EditRoundModal round={editing} onClose={() => setEditing(null)} onSaved={applyRounds} />}
 
-      {pending?.kind === "delete" && (
+      {pending && (
         <ConfirmModal
           title={`ลบรอบที่ ${pending.round.sequenceNo}?`}
           confirmLabel="ลบรอบ"
@@ -253,26 +209,6 @@ export default function RoundsTab({ courseId }: { courseId: string }) {
           onClose={() => setPending(null)}
         >
           <p>รอบที่ตามหลังจะถูกเลื่อนเลขขึ้นมาแทน</p>
-        </ConfirmModal>
-      )}
-
-      {pending?.kind === "release" && (
-        <ConfirmModal
-          title={
-            pending.release
-              ? `เผยแพร่${RELEASE_TEXT[pending.what].label}รอบที่ ${pending.round.sequenceNo}?`
-              : `ยกเลิกการเผยแพร่${RELEASE_TEXT[pending.what].label}รอบที่ ${pending.round.sequenceNo}?`
-          }
-          confirmLabel={pending.release ? "เผยแพร่" : "ยกเลิกการเผยแพร่"}
-          danger={!pending.release}
-          onConfirm={runPending}
-          onClose={() => setPending(null)}
-        >
-          <p className={cn(!pending.release && "text-muted-foreground")}>
-            {pending.release
-              ? RELEASE_TEXT[pending.what].effect
-              : `นักศึกษาจะมองไม่เห็น${RELEASE_TEXT[pending.what].label}ของรอบนี้จนกว่าจะเผยแพร่อีกครั้ง`}
-          </p>
         </ConfirmModal>
       )}
     </div>

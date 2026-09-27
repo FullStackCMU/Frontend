@@ -1,18 +1,4 @@
-/* ลำดับ layer (ต่ำ → สูง) — ต้องตรงกับ LAYER_ORDER ใน vite.config.ts
-   - properties/theme/base : Tailwind theme + preflight
-   - legacy          : Pico (import ใน main.tsx ผ่าน plugin legacyPico) + CSS ชุดเดิมใน styles/
-                       มีผลเฉพาะใน .pico และอยู่เหนือ preflight เพื่อให้หน้าเดิมหน้าตาเหมือนเดิมระหว่างย้าย
-   - app             : ค่า global ของ UI ใหม่ (ต้องชนะ :root ของ Pico ที่อยู่ใน legacy)
-   - components/utilities : Tailwind — ชนะทุกอย่างข้างบน
-   ย้ายหน้าครบแล้ว: ลบ import ด้านล่าง + โฟลเดอร์ styles/ + Pico ใน main.tsx/vite.config.ts + .pico ใน App.tsx */
-@layer properties, theme, base, legacy, app, components, utilities;
-
-@import "./styles/theme.css" layer(legacy);
-
 @import "tailwindcss";
-
-/* className="outline" ของปุ่ม Pico ในหน้าเดิมชนกับ utility `outline` ของ Tailwind */
-@source not inline("outline");
 
 @theme inline {
   --color-background: var(--background);
@@ -73,11 +59,8 @@
   --ramp-5: #4338ca;
 }
 
-@layer app {
-  /* Pico ตั้ง font-size ของ :root เป็น 85% (tokens.css) ซึ่งจะทำให้ rem ของ Tailwind เล็กลง
-     ตั้งกลับเป็น 100% ที่นี่ แล้วให้ .pico ย่อข้อความของตัวเองแทน */
+@layer base {
   :root {
-    font-size: 100%;
     line-height: 1.5;
     font-family: var(--font-body);
     background-color: var(--background);
@@ -94,9 +77,5 @@
 
   #root {
     min-height: 100vh;
-  }
-
-  .pico {
-    font-size: 85%;
   }
 }

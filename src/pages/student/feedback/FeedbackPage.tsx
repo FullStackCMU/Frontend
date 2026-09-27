@@ -172,7 +172,8 @@ export default function FeedbackPage() {
     );
 
   const { round, course, scores, comments } = data;
-  const released = scores !== null || comments !== null;
+  // "เผยแพร่แล้ว" ตามอาจารย์ — แต่อาจไม่มีข้อมูลถ้าผู้ประเมินไม่พอ (withheldReason)
+  const released = !!(round.scoresReleasedAt || round.feedbackReleasedAt);
   const releasedAt = [round.scoresReleasedAt, round.feedbackReleasedAt].filter(Boolean).sort().at(-1);
   const courseLabel = formatCourseCode(course.courseCode, course.section);
 
@@ -188,6 +189,17 @@ export default function FeedbackPage() {
 
   const left = !released ? (
     <Pending data={data} />
+  ) : data.withheldReason ? (
+    <Card className="flex flex-col items-center gap-3 py-10 text-center">
+      <div className="flex size-12 items-center justify-center rounded-2xl bg-muted">
+        <Lock size={22} className="text-muted-foreground" />
+      </div>
+      <p className="font-semibold text-foreground">{data.withheldReason}</p>
+      <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+        รอบนี้มีเพื่อนส่งแบบประเมินให้คุณ {data.peerCount} คน ระบบแสดงผลเมื่อมีอย่างน้อย {data.minPeers} คน
+        เพื่อไม่ให้รู้ว่าใครให้คะแนนหรือเขียนความเห็น
+      </p>
+    </Card>
   ) : (
     <>
       {scores ? (

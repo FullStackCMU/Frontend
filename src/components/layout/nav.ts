@@ -14,7 +14,7 @@ export interface NavItem {
   badge?: number;
 }
 
-// เมนูตาม design-ref — หน้าที่ยังไม่ได้ย้ายจะ render หน้าเดิม (.pico) ที่ path เดียวกัน
+// เมนูตาม design-ref
 export const STUDENT_NAV: NavItem[] = [
   { to: "/assignments", label: "แบบประเมิน", icon: ClipboardList },
   { to: "/courses", label: "วิชาของฉัน", icon: BookOpen },

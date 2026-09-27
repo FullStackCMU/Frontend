@@ -10,6 +10,7 @@ import { X } from "lucide-react";
 const WIDTH = {
   md: "max-w-[560px]",
   lg: "max-w-[640px]",
+  xl: "max-w-[860px]",
 };
 
 export function Modal({

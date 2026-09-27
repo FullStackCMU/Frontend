@@ -5,7 +5,6 @@ import { isStaff } from "./lib/user";
 import { Button } from "./components/ui/Button";
 import { LogoMark } from "./components/ui/Brand";
 import AppLayout from "./components/layout/AppLayout";
-import LegacyPage from "./components/layout/LegacyPage";
 import { STAFF_NAV, STUDENT_NAV } from "./components/layout/nav";
 import LoginPage from "./pages/LoginPage";
 import ConsentPage from "./pages/ConsentPage";
@@ -17,7 +16,7 @@ import FeedbackListPage from "./pages/student/feedback/FeedbackListPage";
 import FeedbackPage from "./pages/student/feedback/FeedbackPage";
 import CourseDashboard from "./pages/instructor/CourseDashboard";
 import CourseDetail from "./pages/instructor/course/CourseDetail";
-import ReviewView from "./pages/instructor/ReviewView";
+import DashboardPage from "./pages/instructor/dashboard/DashboardPage";
 import type { ConsentStatus, Me } from "./types";
 
 // หน้าตัวอย่าง UI primitives — มีเฉพาะตอน dev (build จริงตัดทิ้ง)
@@ -139,7 +138,6 @@ function App() {
 
   const staff = isStaff(me);
 
-  // LegacyPage = หน้าเดิม (Pico) ที่ยังไม่ได้ย้าย — เหลือแค่แดชบอร์ดอาจารย์
   return (
     <Routes>
       <Route path="/login" element={<Navigate to="/" replace />} />
@@ -159,14 +157,7 @@ function App() {
         {staff ? (
           <>
             <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route
-              path="/dashboard"
-              element={
-                <LegacyPage title="แดชบอร์ด" description="คำตอบของนักศึกษาในแต่ละรอบ">
-                  <ReviewView />
-                </LegacyPage>
-              }
-            />
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/courses" element={<CourseDashboard />} />
             <Route path="/courses/:courseId/*" element={<CourseDetail />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

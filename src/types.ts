@@ -1,5 +1,3 @@
-export type QuestionType = "scale" | "text";
-
 export type AccountType = "StdAcc" | "MISEmpAcc";
 
 /** ผู้ใช้ที่ login อยู่ — ตรงกับ GET /auth/me (แถว users) */
@@ -136,32 +134,6 @@ export interface ImportResult {
   issues: ImportIssue[];
 }
 
-export interface FeedbackSummary {
-  id: string;
-  roundId: string;
-  roundName?: string;
-  courseId?: string;
-  studentId?: string;
-  studentName?: string;
-  summary: string;
-  isPublished?: boolean;
-  createdAt: string;
-}
-
-export interface RawAnswer {
-  answerId: string;
-  questionId: string;
-  questionContent: string;
-  questionType: QuestionType;
-  sortOrder: number;
-  scoreValue: number | null;
-  textValue: string | null;
-  evaluatorId: string;
-  evaluateeId: string;
-  evaluateeName: string;
-  createdAt: string;
-}
-
 export interface ApiResponse<T> {
   msg: string;
   data: T;
@@ -242,6 +214,9 @@ export interface RoundFeedback {
   mySubmission: { status: "draft" | "submitted"; submittedAt: string | null } | null;
   /** จำนวนเพื่อนที่ส่งแบบประเมินให้คุณ */
   peerCount: number;
+  /** มีค่า = เผยแพร่แล้วแต่ไม่แสดงผล เพราะผู้ประเมินน้อยกว่า minPeers คน */
+  withheldReason: string | null;
+  minPeers: number;
   scores:
     | {
         questionId: string;
@@ -266,4 +241,35 @@ export interface Assignment extends CourseRef {
   mySubmission: { status: "draft" | "submitted"; submittedAt: string | null } | null;
   /** ตอบแล้ว / ทั้งหมด (คำถาม × คนในกลุ่ม) */
   progress: { answered: number; total: number };
+}
+
+// ───────────── แดชบอร์ดอาจารย์ ─────────────
+
+export interface OverviewRow {
+  student: { id: string; studentId: string | null; name: string };
+  groupId: string | null;
+  submission: { status: "draft" | "submitted"; submittedAt: string | null } | null;
+  /** จำนวนเพื่อนที่ส่งแบบประเมินให้คนนี้ (ไม่นับตัวเอง) */
+  peerCount: number;
+  scores: { questionId: string; peerAverage: number | null; selfScore: number | null }[];
+}
+
+/** GET /feedback/rounds/:roundId/overview */
+export interface RoundOverview {
+  round: RoundSummary & { courseId: string; scaleMin: number; scaleMax: number };
+  questions: { id: string; orderNo: number; prompt: string }[];
+  groups: { id: string | null; name: string; rows: OverviewRow[] }[];
+  /** นักศึกษาที่มีผู้ประเมินน้อยกว่านี้จะไม่เห็นผลของตัวเอง */
+  minPeers: number;
+}
+
+/** GET /feedback/rounds/:roundId/students/:studentId — อาจารย์เห็นชื่อผู้ประเมิน */
+export interface StudentFeedbackDetail {
+  student: { id: string; studentId: string | null; name: string; group: { id: string; name: string } | null };
+  questions: { id: string; orderNo: number; type: "rating" | "text"; prompt: string }[];
+  scale: { min: number; max: number };
+  evaluations: {
+    evaluator: { id: string; name: string; isSelf: boolean };
+    answers: { questionId: string; score: number | null; comment: string | null }[];
+  }[];
 }
