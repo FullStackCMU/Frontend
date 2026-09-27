@@ -95,7 +95,7 @@ export default function RoundsView() {
             <option value="">— เลือกรายวิชา —</option>
             {courses.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.courseCode} · {c.name}
+                {c.courseCode} · {c.title}
               </option>
             ))}
           </select>

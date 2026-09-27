@@ -33,25 +33,86 @@ export interface User {
   role: Role;
 }
 
+export type EnrollmentRole = "instructor" | "student";
+
+/** รอบที่แสดงบนการ์ดวิชา — สถานะคำนวณด้วย getRoundStatus() */
+export interface RoundSummary {
+  id: string;
+  sequenceNo: number;
+  opensAt: string;
+  closesAt: string;
+  scoresReleasedAt: string | null;
+  feedbackReleasedAt: string | null;
+}
+
+/** GET /courses — วิชาที่ผู้ใช้มี enrollment */
 export interface Course {
   id: string;
   courseCode: string;
-  name: string;
+  title: string;
+  section: string | null;
+  /** 1, 2 หรือ 3 (ฤดูร้อน) */
+  semester: number;
+  /** ปี พ.ศ. */
+  academicYear: number;
   createdAt: string;
+  role: EnrollmentRole;
+  studentCount: number;
+  currentRound: RoundSummary | null;
 }
 
-export interface GroupMember {
+/** คนในวิชา (จาก users) — name = ชื่อที่แสดงสำเร็จรูปจาก backend */
+export interface Person {
   id: string;
+  studentId: string | null;
+  cmuAccount: string;
   name: string;
-  username: string;
+  /** null = import แล้วแต่ยังไม่เคยเข้าระบบ */
+  firstLoginAt: string | null;
 }
 
+export interface GroupMember extends Person {
+  joinedAt: string;
+  contractAcceptedAt: string | null;
+}
+
+/** กลุ่ม + สมาชิกปัจจุบัน (left_at เป็น null) */
 export interface Group {
   id: string;
-  name: string;
-  section: string | null;
   courseId: string;
+  name: string;
+  /** null = ไม่จำกัด */
+  maxMembers: number | null;
+  contractText: string | null;
+  createdAt: string;
   members: GroupMember[];
+}
+
+/** GET /courses/:courseId/students */
+export interface CourseStudent extends Person {
+  group: { id: string; name: string } | null;
+}
+
+/** GET /groups?courseId= */
+export interface GroupsOverview {
+  groups: Group[];
+  unassigned: Person[];
+}
+
+export interface ImportIssue {
+  /** บรรทัดในไฟล์ CSV (บรรทัดแรกคือหัวตาราง) */
+  line: number;
+  reason: string;
+  kind: "duplicate" | "invalid";
+}
+
+/** POST /courses/:courseId/students/import */
+export interface ImportResult {
+  added: number;
+  created: number;
+  duplicate: number;
+  invalid: number;
+  issues: ImportIssue[];
 }
 
 export interface Round {

@@ -25,7 +25,7 @@ export default function CourseListView({
 
   useEffect(() => {
     api
-      .get<ApiResponse<Course[]>>("/courses/my")
+      .get<ApiResponse<Course[]>>("/courses")
       .then((res) => setCourses(res.data.data))
       .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setLoading(false));
@@ -66,7 +66,7 @@ export default function CourseListView({
               data-cy={`course-${c.id}`}
             >
               <div className="course-card-code">{c.courseCode}</div>
-              <div className="course-card-name">{c.name}</div>
+              <div className="course-card-name">{c.title}</div>
               <div className="course-card-arrow">
                 <Icon name="arrow-right" size={18} />
               </div>

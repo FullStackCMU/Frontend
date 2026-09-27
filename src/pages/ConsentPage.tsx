@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   Check,
-  CircleAlert,
   Clock,
   Eye,
   FileText,
@@ -9,6 +8,7 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
+import { Alert } from "../components/ui/Alert";
 import { Button } from "../components/ui/Button";
 import { acceptConsent, getErrorMessage } from "../lib/api";
 import {
@@ -144,13 +144,7 @@ export default function ConsentPage({
           </label>
 
           {error && (
-            <p
-              role="alert"
-              className="mb-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700"
-            >
-              <CircleAlert size={16} className="mt-0.5 shrink-0" />
-              {error}
-            </p>
+            <Alert className="mb-3">{error}</Alert>
           )}
 
           <div className="mb-2 flex items-center gap-2">

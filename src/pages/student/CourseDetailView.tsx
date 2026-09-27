@@ -19,7 +19,7 @@ export default function CourseDetailView({ me }: { me: Me }) {
 
   useEffect(() => {
     api
-      .get<ApiResponse<Course[]>>("/courses/my")
+      .get<ApiResponse<Course[]>>("/courses")
       .then((res) => setCourses(res.data.data))
       .catch((err) => setError(getErrorMessage(err)));
   }, []);
@@ -36,7 +36,7 @@ export default function CourseDetailView({ me }: { me: Me }) {
 
   return (
     <>
-      <h3 className="page-heading">{course.name}</h3>
+      <h3 className="page-heading">{course.title}</h3>
       <p className="page-description">{course.courseCode}</p>
 
       <nav aria-label="แท็บรายวิชา" style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>

@@ -11,8 +11,8 @@ import LoginPage from "./pages/LoginPage";
 import ConsentPage from "./pages/ConsentPage";
 import CourseListView from "./pages/student/CourseListView";
 import CourseDetailView from "./pages/student/CourseDetailView";
-import CoursesView from "./pages/instructor/CoursesView";
-import GroupsView from "./pages/instructor/GroupsView";
+import CourseDashboard from "./pages/instructor/CourseDashboard";
+import CourseDetail from "./pages/instructor/course/CourseDetail";
 import RoundsView from "./pages/instructor/RoundsView";
 import ReviewView from "./pages/instructor/ReviewView";
 import type { ConsentStatus, Me } from "./types";
@@ -68,12 +68,12 @@ function App() {
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
   }, []);
 
+  // ลบ session ของระบบแล้วกลับหน้า login (route ของ anonymous พาไป /login เอง)
+  // request ล้มเหลวก็ยังถือว่า logout ฝั่งหน้าเว็บ
+  // หมายเหตุ: session ที่ oauth497 ยังอยู่ — login ใหม่จะได้บัญชีเดิม (end-session / prompt=login ใช้ไม่ได้)
   async function handleLogout() {
-    try {
-      await logout();
-    } finally {
-      setSession({ status: "anonymous" });
-    }
+    await logout().catch(() => {});
+    setSession({ status: "anonymous" });
   }
 
   if (UiPreview && location.pathname === "/dev/ui") {
@@ -164,22 +164,8 @@ function App() {
                 </LegacyPage>
               }
             />
-            <Route
-              path="/courses"
-              element={
-                <LegacyPage title="คอร์สของฉัน" description="สร้างรายวิชาและลงทะเบียนนักศึกษา">
-                  <CoursesView />
-                </LegacyPage>
-              }
-            />
-            <Route
-              path="/groups"
-              element={
-                <LegacyPage title="จัดกลุ่ม" description="จัดกลุ่มนักศึกษาตามรายวิชา">
-                  <GroupsView />
-                </LegacyPage>
-              }
-            />
+            <Route path="/courses" element={<CourseDashboard />} />
+            <Route path="/courses/:courseId/*" element={<CourseDetail />} />
             <Route
               path="/rounds"
               element={

@@ -5,6 +5,7 @@ import type {
   Course,
   FeedbackSummary,
   Group,
+  GroupsOverview,
   RawAnswer,
   Round,
 } from "../../types";
@@ -46,11 +47,11 @@ export default function ReviewView() {
     if (!courseId) return;
     Promise.all([
       api.get<ApiResponse<Round[]>>(`/rounds?courseId=${courseId}`),
-      api.get<ApiResponse<Group[]>>(`/groups?courseId=${courseId}`),
+      api.get<ApiResponse<GroupsOverview>>(`/groups?courseId=${courseId}`),
     ])
       .then(([r, g]) => {
         setRounds(r.data.data);
-        setGroups(g.data.data);
+        setGroups(g.data.data.groups);
       })
       .catch((err) => setMsg(getErrorMessage(err)));
   }, [courseId]);
