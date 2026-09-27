@@ -12,6 +12,10 @@ export default defineConfig({
   ],
 
   server: {
+    // OAuth callback ที่ลงทะเบียนไว้คือ http://localhost:5173/api/auth/callback
+    // พอร์ตไม่ว่าง → ให้ error เลย ไม่ย้ายไป 5174 เงียบๆ (login จะพัง)
+    port: 5173,
+    strictPort: true,
     // https://stackoverflow.com/a/74430384
     proxy: {
       "/api": {
