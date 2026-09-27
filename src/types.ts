@@ -1,4 +1,3 @@
-export type Role = "student" | "instructor";
 export type QuestionType = "scale" | "text";
 
 export type AccountType = "StdAcc" | "MISEmpAcc";
@@ -23,14 +22,6 @@ export interface ConsentStatus {
   policyVersion: string;
   accepted: boolean;
   acceptedAt: string | null;
-}
-
-/** @deprecated ข้อมูล /users รูปแบบเดิม — ใช้เฉพาะหน้าอาจารย์ที่ยังไม่ได้ย้าย (CoursesView, GroupsView) */
-export interface User {
-  id: string;
-  username: string;
-  name: string;
-  role: Role;
 }
 
 export type EnrollmentRole = "instructor" | "student";
@@ -145,41 +136,6 @@ export interface ImportResult {
   issues: ImportIssue[];
 }
 
-export interface Round {
-  id: string;
-  courseId: string;
-  name: string;
-  description: string | null;
-  isOpen: boolean;
-  createdAt: string;
-}
-
-export interface Question {
-  id: string;
-  roundId: string;
-  content: string;
-  type: QuestionType;
-  sortOrder: number;
-}
-
-export interface Answer {
-  id: string;
-  questionId: string;
-  groupId: string;
-  evaluatorId: string;
-  evaluateeId: string;
-  scoreValue: number | null;
-  textValue: string | null;
-  createdAt: string;
-}
-
-export interface Progress {
-  evaluateeId: string;
-  answered: number;
-  total: number;
-  completed: boolean;
-}
-
 export interface FeedbackSummary {
   id: string;
   roundId: string;
@@ -249,4 +205,65 @@ export interface Evaluation {
   answers: EvalAnswer[];
   /** เหตุผลที่ยังบันทึก/ส่งไม่ได้ — null = ทำได้ */
   blocker: string | null;
+}
+
+// ───────────── ผลประเมิน / แบบประเมินรวมทุกวิชา ─────────────
+
+interface CourseRef {
+  courseId: string;
+  courseCode: string;
+  section: string | null;
+  courseTitle: string;
+}
+
+/** GET /feedback — รอบที่ดูผลได้แล้ว */
+export interface FeedbackListItem extends CourseRef {
+  roundId: string;
+  sequenceNo: number;
+  scoresReleasedAt: string | null;
+  feedbackReleasedAt: string | null;
+  releasedAt: string;
+}
+
+/** GET /feedback/rounds/:roundId — scores/comments เป็น null ถ้ายังไม่เผยแพร่ */
+export interface RoundFeedback {
+  round: {
+    id: string;
+    sequenceNo: number;
+    opensAt: string;
+    closesAt: string;
+    scaleMin: number;
+    scaleMax: number;
+    scoresReleasedAt: string | null;
+    feedbackReleasedAt: string | null;
+  };
+  course: { id: string; courseCode: string; section: string | null; title: string };
+  groupName: string | null;
+  mySubmission: { status: "draft" | "submitted"; submittedAt: string | null } | null;
+  /** จำนวนเพื่อนที่ส่งแบบประเมินให้คุณ */
+  peerCount: number;
+  scores:
+    | {
+        questionId: string;
+        orderNo: number;
+        prompt: string;
+        peerAverage: number | null;
+        peerCount: number;
+        selfScore: number | null;
+      }[]
+    | null;
+  comments: { questionId: string; orderNo: number; prompt: string; comments: string[] }[] | null;
+}
+
+/** GET /rounds/assignments — รอบที่เปิดรับอยู่จากทุกวิชา */
+export interface Assignment extends CourseRef {
+  roundId: string;
+  sequenceNo: number;
+  opensAt: string;
+  closesAt: string;
+  myGroup: { id: string; name: string } | null;
+  contractPending: boolean;
+  mySubmission: { status: "draft" | "submitted"; submittedAt: string | null } | null;
+  /** ตอบแล้ว / ทั้งหมด (คำถาม × คนในกลุ่ม) */
+  progress: { answered: number; total: number };
 }

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { fetchConsent, fetchMe, logout, UNAUTHORIZED_EVENT } from "./lib/api";
 import { isStaff } from "./lib/user";
 import { Button } from "./components/ui/Button";
@@ -9,11 +9,12 @@ import LegacyPage from "./components/layout/LegacyPage";
 import { STAFF_NAV, STUDENT_NAV } from "./components/layout/nav";
 import LoginPage from "./pages/LoginPage";
 import ConsentPage from "./pages/ConsentPage";
-import CourseListView from "./pages/student/CourseListView";
+import AssignmentsPage from "./pages/student/AssignmentsPage";
 import MyCoursesPage from "./pages/student/MyCoursesPage";
 import StudentCourseDetail from "./pages/student/course/StudentCourseDetail";
 import EvaluationFlow from "./pages/student/evaluation/EvaluationFlow";
-import FeedbackView from "./pages/student/FeedbackView";
+import FeedbackListPage from "./pages/student/feedback/FeedbackListPage";
+import FeedbackPage from "./pages/student/feedback/FeedbackPage";
 import CourseDashboard from "./pages/instructor/CourseDashboard";
 import CourseDetail from "./pages/instructor/course/CourseDetail";
 import ReviewView from "./pages/instructor/ReviewView";
@@ -37,12 +38,6 @@ async function loadSession(): Promise<Session> {
   if (!me) return { status: "anonymous" };
   const consent = isStaff(me) ? null : await fetchConsent();
   return { status: "authenticated", me, consent };
-}
-
-// (หน้าเดิม) ฟีดแบ็กของวิชา — แทนที่ในขั้นหน้าผลประเมิน
-function LegacyFeedback() {
-  const { courseId = "" } = useParams();
-  return <FeedbackView courseId={courseId} />;
 }
 
 function FullScreen({ children }: { children: React.ReactNode }) {
@@ -144,7 +139,7 @@ function App() {
 
   const staff = isStaff(me);
 
-  // LegacyPage = หน้าเดิม (Pico) ที่ยังไม่ได้ย้าย — แทนที่ทีละหน้าในขั้น 3–4
+  // LegacyPage = หน้าเดิม (Pico) ที่ยังไม่ได้ย้าย — เหลือแค่แดชบอร์ดอาจารย์
   return (
     <Routes>
       <Route path="/login" element={<Navigate to="/" replace />} />
@@ -179,41 +174,12 @@ function App() {
         ) : (
           <>
             <Route index element={<Navigate to="/assignments" replace />} />
-            <Route
-              path="/assignments"
-              element={
-                <LegacyPage>
-                  <CourseListView
-                    me={me}
-                    subtitle="เลือกรายวิชาเพื่อเริ่มประเมินเพื่อนร่วมทีม"
-                    linkTo={(id) => `/courses/${id}`}
-                  />
-                </LegacyPage>
-              }
-            />
+            <Route path="/assignments" element={<AssignmentsPage />} />
             <Route path="/courses" element={<MyCoursesPage />} />
             <Route path="/courses/:courseId" element={<StudentCourseDetail me={me} />} />
             <Route path="/courses/:courseId/rounds/:roundId/*" element={<EvaluationFlow />} />
-            <Route
-              path="/courses/:courseId/feedback"
-              element={
-                <LegacyPage title="ฟีดแบ็ก">
-                  <LegacyFeedback />
-                </LegacyPage>
-              }
-            />
-            <Route
-              path="/feedback"
-              element={
-                <LegacyPage>
-                  <CourseListView
-                    me={me}
-                    subtitle="เลือกรายวิชาเพื่อดูฟีดแบ็ก"
-                    linkTo={(id) => `/courses/${id}/feedback`}
-                  />
-                </LegacyPage>
-              }
-            />
+            <Route path="/feedback" element={<FeedbackListPage />} />
+            <Route path="/feedback/:roundId" element={<FeedbackPage />} />
             <Route path="*" element={<Navigate to="/assignments" replace />} />
           </>
         )}

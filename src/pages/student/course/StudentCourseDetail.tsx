@@ -81,10 +81,19 @@ function RoundCard({ round, blocker }: { round: CourseRound; blocker: string | n
         </p>
       )}
 
-      {status === "closed" && <p className="text-xs text-muted-foreground">รอบนี้ปิดรับแล้ว คุณไม่ได้ส่งแบบประเมิน</p>}
+      {status === "closed" && (
+        <p className="text-xs text-muted-foreground">
+          รอบนี้ปิดรับแล้ว คุณไม่ได้ส่งแบบประเมิน ·{" "}
+          <Link to={`/feedback/${round.id}`} className="font-medium text-primary hover:underline">
+            ดูสถานะผล
+          </Link>
+        </p>
+      )}
 
       {status === "released" && (
-        <p className="text-xs text-muted-foreground">อาจารย์เผยแพร่ผลแล้ว ดูได้ที่เมนูฟีดแบ็ก (เร็วๆ นี้)</p>
+        <Link to={`/feedback/${round.id}`} className={buttonClass({ variant: "outline", fullWidth: true })}>
+          ดูผลประเมิน
+        </Link>
       )}
     </Card>
   );
