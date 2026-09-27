@@ -1,6 +1,5 @@
 import {
   BookOpen,
-  CalendarClock,
   ClipboardList,
   LayoutDashboard,
   MessageSquare,
@@ -26,6 +25,4 @@ export const STUDENT_NAV: NavItem[] = [
 export const STAFF_NAV: NavItem[] = [
   { to: "/dashboard", label: "แดชบอร์ด", icon: LayoutDashboard },
   { to: "/courses", label: "คอร์สของฉัน", icon: BookOpen },
-  // ชั่วคราว: design รวมรอบเป็นแท็บในหน้าคอร์ส — เอาออกเมื่อย้ายแท็บรอบ (3.3)
-  { to: "/rounds", label: "รอบประเมิน", icon: CalendarClock },
 ];

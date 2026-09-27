@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { fetchConsent, fetchMe, logout, UNAUTHORIZED_EVENT } from "./lib/api";
 import { isStaff } from "./lib/user";
 import { Button } from "./components/ui/Button";
@@ -10,10 +10,11 @@ import { STAFF_NAV, STUDENT_NAV } from "./components/layout/nav";
 import LoginPage from "./pages/LoginPage";
 import ConsentPage from "./pages/ConsentPage";
 import CourseListView from "./pages/student/CourseListView";
-import CourseDetailView from "./pages/student/CourseDetailView";
+import MyCoursesPage from "./pages/student/MyCoursesPage";
+import StudentCourseDetail from "./pages/student/course/StudentCourseDetail";
+import FeedbackView from "./pages/student/FeedbackView";
 import CourseDashboard from "./pages/instructor/CourseDashboard";
 import CourseDetail from "./pages/instructor/course/CourseDetail";
-import RoundsView from "./pages/instructor/RoundsView";
 import ReviewView from "./pages/instructor/ReviewView";
 import type { ConsentStatus, Me } from "./types";
 
@@ -35,6 +36,12 @@ async function loadSession(): Promise<Session> {
   if (!me) return { status: "anonymous" };
   const consent = isStaff(me) ? null : await fetchConsent();
   return { status: "authenticated", me, consent };
+}
+
+// (หน้าเดิม) ฟีดแบ็กของวิชา — แทนที่ในขั้นหน้าผลประเมิน
+function LegacyFeedback() {
+  const { courseId = "" } = useParams();
+  return <FeedbackView courseId={courseId} />;
 }
 
 function FullScreen({ children }: { children: React.ReactNode }) {
@@ -166,14 +173,6 @@ function App() {
             />
             <Route path="/courses" element={<CourseDashboard />} />
             <Route path="/courses/:courseId/*" element={<CourseDetail />} />
-            <Route
-              path="/rounds"
-              element={
-                <LegacyPage title="รอบประเมิน" description="สร้างรอบประเมินและเปิด-ปิดรอบ">
-                  <RoundsView />
-                </LegacyPage>
-              }
-            />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>
         ) : (
@@ -191,23 +190,13 @@ function App() {
                 </LegacyPage>
               }
             />
+            <Route path="/courses" element={<MyCoursesPage />} />
+            <Route path="/courses/:courseId" element={<StudentCourseDetail me={me} />} />
             <Route
-              path="/courses"
+              path="/courses/:courseId/feedback"
               element={
-                <LegacyPage>
-                  <CourseListView
-                    me={me}
-                    subtitle="รายวิชาที่คุณลงทะเบียน"
-                    linkTo={(id) => `/courses/${id}`}
-                  />
-                </LegacyPage>
-              }
-            />
-            <Route
-              path="/courses/:courseId/*"
-              element={
-                <LegacyPage>
-                  <CourseDetailView me={me} />
+                <LegacyPage title="ฟีดแบ็ก">
+                  <LegacyFeedback />
                 </LegacyPage>
               }
             />

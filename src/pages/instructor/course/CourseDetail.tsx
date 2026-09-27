@@ -9,25 +9,12 @@ import { formatCourseCode, formatTerm } from "../../../lib/course";
 import type { ApiResponse, Course } from "../../../types";
 import StudentsTab from "./StudentsTab";
 import GroupsTab from "./GroupsTab";
+import RoundsTab from "./RoundsTab";
 import UploadStudentsModal from "./UploadStudentsModal";
-
-function RoundsTabPlaceholder() {
-  return (
-    <div className="flex flex-col items-center justify-center gap-2 py-24 text-center">
-      <p className="font-semibold text-foreground">แท็บรอบประเมินกำลังย้ายมาที่นี่</p>
-      <p className="text-sm text-muted-foreground">
-        ระหว่างนี้จัดการรอบได้ที่{" "}
-        <Link to="/rounds" className="font-medium text-primary hover:underline">
-          เมนูรอบประเมิน
-        </Link>
-      </p>
-    </div>
-  );
-}
 
 /**
  * หน้ารายละเอียดวิชาของอาจารย์ (CourseDetail ใน design-ref)
- * /courses/:courseId → นักศึกษา, /groups → กลุ่ม, /rounds → รอบประเมิน (3.3)
+ * /courses/:courseId → นักศึกษา, /groups → กลุ่ม, /rounds → รอบประเมิน
  */
 export default function CourseDetail() {
   const { courseId = "" } = useParams();
@@ -114,7 +101,7 @@ export default function CourseDetail() {
               }
             />
             <Route path="groups" element={<GroupsTab key={reloadKey} courseId={courseId} />} />
-            <Route path="rounds" element={<RoundsTabPlaceholder />} />
+            <Route path="rounds" element={<RoundsTab courseId={courseId} />} />
             <Route path="*" element={<Navigate to={base} replace />} />
           </Routes>
 

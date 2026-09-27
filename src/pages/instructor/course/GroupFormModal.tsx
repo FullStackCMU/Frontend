@@ -118,7 +118,7 @@ export default function GroupFormModal({
             htmlFor="group-contract"
             hint={
               memberCount > 0
-                ? `สมาชิกยอมรับแล้ว ${acceptedCount} จาก ${memberCount} คน — การแก้ข้อความไม่ได้รีเซ็ตการยอมรับเดิม`
+                ? `ตอนนี้ยอมรับแล้ว ${acceptedCount} จาก ${memberCount} คน — ถ้าแก้ข้อความ สมาชิกทุกคนต้องกดยอมรับใหม่`
                 : "สมาชิกจะเห็นและกดยอมรับข้อตกลงนี้เมื่อเข้ากลุ่ม"
             }
           >

@@ -45,6 +45,20 @@ export interface RoundSummary {
   feedbackReleasedAt: string | null;
 }
 
+/** GET /rounds?courseId= — progress มีเฉพาะเมื่อผู้เรียกเป็นอาจารย์ของวิชา */
+export interface CourseRound extends RoundSummary {
+  courseId: string;
+  scaleMin: number;
+  scaleMax: number;
+  createdAt: string;
+  /** จำนวนนักศึกษาที่ส่งแบบประเมินแล้ว (submissions.status = submitted) */
+  submittedCount?: number;
+  /** นักศึกษาที่มีกลุ่มอยู่ตอนนี้ */
+  studentCount?: number;
+  /** มีเฉพาะเมื่อผู้เรียกเป็นนักศึกษา — null = ยังไม่เริ่มทำ */
+  mySubmission?: { status: "draft" | "submitted"; submittedAt: string | null } | null;
+}
+
 /** GET /courses — วิชาที่ผู้ใช้มี enrollment */
 export interface Course {
   id: string;
@@ -57,6 +71,13 @@ export interface Course {
   academicYear: number;
   createdAt: string;
   role: EnrollmentRole;
+  /** ชื่ออาจารย์ผู้สอน */
+  instructors: string[];
+  /** กลุ่มปัจจุบันของผู้ใช้ (นักศึกษา) */
+  myGroup: { id: string; name: string } | null;
+  roundCount: number;
+  /** รอบที่กำลังเปิดรับตอนนี้ */
+  openRoundCount: number;
   studentCount: number;
   currentRound: RoundSummary | null;
 }
@@ -86,6 +107,15 @@ export interface Group {
   contractText: string | null;
   createdAt: string;
   members: GroupMember[];
+}
+
+/** GET /groups/available — มุมมองนักศึกษา (ไม่มีรหัส/อีเมลของคนอื่น) */
+export interface AvailableGroup {
+  id: string;
+  name: string;
+  maxMembers: number | null;
+  contractText: string | null;
+  members: { id: string; name: string }[];
 }
 
 /** GET /courses/:courseId/students */

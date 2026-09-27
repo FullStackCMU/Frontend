@@ -7,7 +7,7 @@ import type {
   Group,
   GroupsOverview,
   RawAnswer,
-  Round,
+  CourseRound,
 } from "../../types";
 
 type StudentAnswers = {
@@ -18,7 +18,7 @@ type StudentAnswers = {
 
 export default function ReviewView() {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [rounds, setRounds] = useState<Round[]>([]);
+  const [rounds, setRounds] = useState<CourseRound[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [courseId, setCourseId] = useState("");
   const [roundId, setRoundId] = useState("");
@@ -46,7 +46,7 @@ export default function ReviewView() {
     setOpenId(null);
     if (!courseId) return;
     Promise.all([
-      api.get<ApiResponse<Round[]>>(`/rounds?courseId=${courseId}`),
+      api.get<ApiResponse<CourseRound[]>>(`/rounds?courseId=${courseId}`),
       api.get<ApiResponse<GroupsOverview>>(`/groups?courseId=${courseId}`),
     ])
       .then(([r, g]) => {
@@ -165,7 +165,7 @@ export default function ReviewView() {
               <option value="">— เลือก —</option>
               {rounds.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.name}
+                  รอบที่ {r.sequenceNo}
                 </option>
               ))}
             </select>

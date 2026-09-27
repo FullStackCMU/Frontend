@@ -62,3 +62,26 @@ export function getRoundStatus(
     .some((r) => r !== null && r <= t);
   return released ? "released" : "closed";
 }
+
+/**
+ * สถานะรอบในมุมนักศึกษา — ใช้ mapping เดียวกับข้างบน
+ * released > ส่งแล้ว (submitted) > ทำค้าง (draft ระหว่างเปิดรับ) > สถานะตามวันที่
+ */
+export function getStudentRoundStatus(
+  round: Parameters<typeof getRoundStatus>[0] & {
+    mySubmission?: { status: "draft" | "submitted" } | null;
+  },
+  now: Date = new Date()
+): Status {
+  const status = getRoundStatus(round, now);
+  if (status === "released") return "released";
+  if (round.mySubmission?.status === "submitted") return "submitted";
+  if (status === "open" && round.mySubmission?.status === "draft") return "draft";
+  return status;
+}
+
+/** ข้อความสำหรับนักศึกษา (สีเดิม) — "เผยแพร่ผลแล้ว" → "ดูผลได้" */
+export const STUDENT_LABEL: Partial<Record<Status, string>> = {
+  closed: "ปิดแล้ว",
+  released: "ดูผลได้",
+};
