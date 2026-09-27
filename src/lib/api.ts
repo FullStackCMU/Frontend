@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { ApiResponse, ConsentStatus, Me } from "../types";
+import type { ApiResponse, ConsentStatus, EvalAnswer, Evaluation, Me } from "../types";
 
 // session อยู่ใน httpOnly cookie (cr_token) ที่ backend ตั้งตอน /auth/callback
 // เรียกผ่าน /api (same-origin ผ่าน vite proxy / nginx) browser จึงแนบ cookie ให้เอง
@@ -47,6 +47,23 @@ export async function acceptConsent(policyVersion: string) {
   const res = await api.post<ApiResponse<ConsentStatus>>("/consents", {
     policyVersion,
   });
+  return res.data.data;
+}
+
+export async function fetchEvaluation(roundId: string) {
+  const res = await api.get<ApiResponse<Evaluation>>(`/answers/${roundId}`);
+  return res.data.data;
+}
+
+/** บันทึกร่าง — ส่งคำตอบทั้งหมดที่มี (backend แทนที่ของเดิมทั้งชุด) */
+export async function saveEvaluationDraft(roundId: string, answers: EvalAnswer[]) {
+  const res = await api.put<ApiResponse<Evaluation>>(`/answers/${roundId}/draft`, { answers });
+  return res.data.data;
+}
+
+/** ส่งแบบประเมิน — ต้องตอบครบ ส่งแล้วแก้ไม่ได้ */
+export async function submitEvaluation(roundId: string, answers: EvalAnswer[]) {
+  const res = await api.post<ApiResponse<Evaluation>>(`/answers/${roundId}/submit`, { answers });
   return res.data.data;
 }
 

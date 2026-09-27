@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Clock } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { Breadcrumb } from "../../../components/ui/Breadcrumb";
 import { Button } from "../../../components/ui/Button";
+import { buttonClass } from "../../../components/ui/button-variants";
 import { Card } from "../../../components/ui/Card";
 import { StatusDot, StatusPill } from "../../../components/ui/StatusPill";
 import { api, getErrorMessage } from "../../../lib/api";
@@ -37,6 +38,7 @@ async function loadData(courseId: string): Promise<Data> {
 function RoundCard({ round, blocker }: { round: CourseRound; blocker: string | null }) {
   const status = getStudentRoundStatus(round);
   const canStart = status === "open" || status === "draft";
+  const roundUrl = `/courses/${round.courseId}/rounds/${round.id}`;
 
   return (
     <Card padding="none" className={cn("flex flex-col gap-3 px-5 py-4", status === "upcoming" && "opacity-60")}>
@@ -55,16 +57,28 @@ function RoundCard({ round, blocker }: { round: CourseRound; blocker: string | n
             <Clock size={11} />
             ปิดรับ {formatDateTime(round.closesAt)}
           </p>
-          {/* หน้าทำแบบประเมินมาใน 4.2 */}
-          <Button fullWidth disabled title="หน้าทำแบบประเมินจะเปิดใช้เร็วๆ นี้">
-            {status === "draft" ? "ทำต่อ" : "เริ่มประเมิน"}
-          </Button>
-          <p className="text-xs text-muted-foreground">{blocker ?? "หน้าทำแบบประเมินจะเปิดใช้เร็วๆ นี้"}</p>
+          {blocker ? (
+            <>
+              <Button fullWidth disabled>
+                {status === "draft" ? "ทำต่อ" : "เริ่มประเมิน"}
+              </Button>
+              <p className="text-xs text-muted-foreground">{blocker}</p>
+            </>
+          ) : (
+            <Link to={roundUrl} className={buttonClass({ fullWidth: true })}>
+              {status === "draft" ? "ทำต่อ" : "เริ่มประเมิน"}
+            </Link>
+          )}
         </div>
       )}
 
       {status === "submitted" && round.mySubmission?.submittedAt && (
-        <p className="text-xs text-muted-foreground">ส่งเมื่อ {formatDateTime(round.mySubmission.submittedAt)}</p>
+        <p className="text-xs text-muted-foreground">
+          ส่งเมื่อ {formatDateTime(round.mySubmission.submittedAt)} ·{" "}
+          <Link to={roundUrl} className="font-medium text-primary hover:underline">
+            ดูรายละเอียด
+          </Link>
+        </p>
       )}
 
       {status === "closed" && <p className="text-xs text-muted-foreground">รอบนี้ปิดรับแล้ว คุณไม่ได้ส่งแบบประเมิน</p>}

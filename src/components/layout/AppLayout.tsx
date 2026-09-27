@@ -170,7 +170,7 @@ export default function AppLayout({
           </>
         )}
 
-        <main className={cn("flex-1", mobileNav === "bottom" && "max-[899px]:pb-16")}>
+        <main className={cn("flex-1", mobileNav === "bottom" && "max-[899px]:pb-(--bottom-nav-h)")}>
           <Outlet />
         </main>
       </div>
@@ -179,7 +179,7 @@ export default function AppLayout({
       {mobileNav === "bottom" && (
         <nav
           aria-label="เมนูหลัก"
-          className="fixed right-0 bottom-0 left-0 z-40 flex items-stretch border-t border-border bg-card pb-[env(safe-area-inset-bottom)] min-[900px]:hidden"
+          className="fixed right-0 bottom-0 left-0 z-40 flex h-(--bottom-nav-h) items-stretch border-t border-border bg-card pb-[env(safe-area-inset-bottom)] min-[900px]:hidden"
         >
           {nav.map(({ to, label, icon: Icon, badge }) => (
             <NavLink

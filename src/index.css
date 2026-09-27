@@ -62,6 +62,9 @@
 
   --font-body: "Sarabun", system-ui, sans-serif;
 
+  /* ความสูงแถบเมนูล่างบนมือถือ (นักศึกษา) — แถบ sticky ด้านล่างของหน้าต้องเว้นระยะนี้ */
+  --bottom-nav-h: calc(3.75rem + env(safe-area-inset-bottom));
+
   /* ไล่เฉดคะแนน 1–5 (indigo สีเดียว) */
   --ramp-1: #c7d2fe;
   --ramp-2: #a5b4fc;

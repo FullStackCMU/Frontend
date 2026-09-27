@@ -210,3 +210,43 @@ export interface ApiResponse<T> {
   msg: string;
   data: T;
 }
+
+// ───────────── ทำแบบประเมิน (GET /answers/:roundId) ─────────────
+
+export interface EvalTarget extends Person {
+  isSelf: boolean;
+}
+
+export interface EvalQuestion {
+  id: string;
+  orderNo: number;
+  type: "rating" | "text";
+  prompt: string;
+}
+
+export interface EvalAnswer {
+  questionId: string;
+  evaluateeId: string;
+  score: number | null;
+  comment: string | null;
+}
+
+export interface Evaluation {
+  round: {
+    id: string;
+    courseId: string;
+    sequenceNo: number;
+    opensAt: string;
+    closesAt: string;
+    scaleMin: number;
+    scaleMax: number;
+  };
+  group: { id: string; name: string } | null;
+  /** ตัวเองอยู่ลำดับแรก */
+  targets: EvalTarget[];
+  questions: EvalQuestion[];
+  submission: { status: "draft" | "submitted"; submittedAt: string | null } | null;
+  answers: EvalAnswer[];
+  /** เหตุผลที่ยังบันทึก/ส่งไม่ได้ — null = ทำได้ */
+  blocker: string | null;
+}

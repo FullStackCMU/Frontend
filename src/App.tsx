@@ -12,6 +12,7 @@ import ConsentPage from "./pages/ConsentPage";
 import CourseListView from "./pages/student/CourseListView";
 import MyCoursesPage from "./pages/student/MyCoursesPage";
 import StudentCourseDetail from "./pages/student/course/StudentCourseDetail";
+import EvaluationFlow from "./pages/student/evaluation/EvaluationFlow";
 import FeedbackView from "./pages/student/FeedbackView";
 import CourseDashboard from "./pages/instructor/CourseDashboard";
 import CourseDetail from "./pages/instructor/course/CourseDetail";
@@ -192,6 +193,7 @@ function App() {
             />
             <Route path="/courses" element={<MyCoursesPage />} />
             <Route path="/courses/:courseId" element={<StudentCourseDetail me={me} />} />
+            <Route path="/courses/:courseId/rounds/:roundId/*" element={<EvaluationFlow />} />
             <Route
               path="/courses/:courseId/feedback"
               element={
