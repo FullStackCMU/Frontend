@@ -1,48 +1,54 @@
 import axios from "axios";
+import type { ApiResponse, ConsentStatus, Me } from "../types";
 
-const TOKEN_KEY = "cr_token";
-const USER_KEY = "cr_user";
-
+// session อยู่ใน httpOnly cookie (cr_token) ที่ backend ตั้งตอน /auth/callback
+// เรียกผ่าน /api (same-origin ผ่าน vite proxy / nginx) browser จึงแนบ cookie ให้เอง
 export const api = axios.create({
   baseURL: "/api",
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+/** ปุ่ม login ต้องเป็นการเปลี่ยนหน้าเต็ม (ไม่ใช่ XHR) เพราะ backend redirect ไปหน้า CMU */
+export const LOGIN_URL = "/api/auth/login";
 
 export const UNAUTHORIZED_EVENT = "cr-unauthorized";
 
+// session หมดอายุระหว่างใช้งาน → ให้ App กลับไปหน้า login
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
       window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
     }
     return Promise.reject(err);
   }
 );
 
-export const tokenStore = {
-  get: () => localStorage.getItem(TOKEN_KEY),
-  set: (t: string) => localStorage.setItem(TOKEN_KEY, t),
-  clear: () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-  },
-};
+/** ผู้ใช้ที่ login อยู่ หรือ null ถ้ายังไม่ได้ login */
+export async function fetchMe(): Promise<Me | null> {
+  try {
+    const res = await api.get<ApiResponse<Me>>("/auth/me");
+    return res.data.data;
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response?.status === 401) return null;
+    throw err;
+  }
+}
 
-export const userStore = {
-  get: () => {
-    const raw = localStorage.getItem(USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  },
-  set: (u: unknown) => localStorage.setItem(USER_KEY, JSON.stringify(u)),
-};
+export async function logout() {
+  await api.post("/auth/logout");
+}
+
+export async function fetchConsent() {
+  const res = await api.get<ApiResponse<ConsentStatus>>("/consents/me");
+  return res.data.data;
+}
+
+export async function acceptConsent(policyVersion: string) {
+  const res = await api.post<ApiResponse<ConsentStatus>>("/consents", {
+    policyVersion,
+  });
+  return res.data.data;
+}
 
 export function getErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {

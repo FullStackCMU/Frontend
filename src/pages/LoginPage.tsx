@@ -1,100 +1,75 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { api, tokenStore, userStore, getErrorMessage } from "../lib/api";
-import { SafeSpaceArt } from "../components/illustrations";
-import Icon from "../components/Icon";
-import type { ApiResponse, User } from "../types";
+import { CircleAlert } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { buttonClass } from "../components/ui/button-variants";
+import { Card } from "../components/ui/Card";
+import { LogoMark } from "../components/ui/Brand";
+import { LOGIN_URL } from "../lib/api";
+import { loginErrorMessage } from "../lib/login-errors";
 
-export default function LoginPage({
-  onSuccess,
-}: {
-  onSuccess: (u: User) => void;
-}) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+function CmuMark() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+      <rect width="28" height="28" rx="6" fill="#5B2D8E" />
+      <text
+        x="14"
+        y="19"
+        textAnchor="middle"
+        fontFamily="sans-serif"
+        fontWeight="700"
+        fontSize="11"
+        fill="white"
+      >
+        CMU
+      </text>
+    </svg>
+  );
+}
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!username || !password) return;
-
-    setLoading(true);
-    setError("");
-    try {
-      const res = await api.post<ApiResponse<{ token: string; user: User }>>(
-        "/auth/login",
-        { username, password }
-      );
-      const { token, user } = res.data.data;
-      tokenStore.set(token);
-      userStore.set(user);
-      onSuccess(user);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }
+export default function LoginPage() {
+  const [searchParams] = useSearchParams();
+  const error = loginErrorMessage(searchParams.get("error"));
 
   return (
-    <div className="login-wrapper">
-      <div className="login-art">
-        <SafeSpaceArt />
-      </div>
-      <hgroup className="login-header">
-        <h1>CollabReflectDDDD</h1>
-        <p className="safety-hint">พื้นที่ปลอดภัยสำหรับสะท้อนการทำงานเป็นทีม</p>
-      </hgroup>
+    <div className="flex min-h-screen items-center justify-center bg-background px-5 py-12 md:bg-linear-to-br md:from-indigo-50 md:to-slate-100">
+      <div className="w-full max-w-sm">
+        <Card padding="lg" className="flex flex-col items-center gap-8 shadow-sm">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <LogoMark size="lg" />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                CollabReflect
+              </h1>
+              <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-muted-foreground">
+                ระบบประเมินเพื่อนร่วมทีมที่ให้ฟีดแบ็กอย่างสร้างสรรค์
+              </p>
+            </div>
+          </div>
 
-      <article>
-        <form onSubmit={handleSubmit}>
-          <label>
-            รหัสนักศึกษา / ชื่อผู้ใช้
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
-              data-cy="input-username"
-            />
-          </label>
+          <div className="h-px w-full bg-border" />
 
-          <label>
-            รหัสผ่าน
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              data-cy="input-password"
-            />
-          </label>
+          <div className="flex w-full flex-col items-center gap-4">
+            {error && (
+              <p
+                role="alert"
+                className="flex w-full items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700"
+              >
+                <CircleAlert size={16} className="mt-0.5 shrink-0" />
+                {error}
+              </p>
+            )}
+            {/* <a> ไม่ใช่ <button> — ต้องเปลี่ยนหน้าเต็มเพื่อให้ backend redirect ไป CMU */}
+            <a href={LOGIN_URL} className={buttonClass({ size: "lg", fullWidth: true })}>
+              <CmuMark />
+              เข้าสู่ระบบด้วยบัญชี CMU
+            </a>
+            <p className="text-center text-xs text-muted-foreground">
+              ใช้บัญชี @cmu.ac.th เท่านั้น
+            </p>
+          </div>
+        </Card>
 
-          {error && (
-            <p className="status-toast">{error}</p>
-          )}
-
-          <button type="submit" aria-busy={loading} data-cy="submit-login">
-            {loading ? "กำลังเข้าสู่ระบบ" : "เข้าสู่ระบบ"}
-          </button>
-        </form>
-
-        <p className="safety-hint" style={{ marginTop: "1rem", textAlign: "center" }}>
-          ยังไม่มีบัญชี?{" "}
-          <Link to="/register" data-cy="link-register">
-            สมัครนักศึกษา
-          </Link>
-        </p>
-      </article>
-
-      <div className="login-safety-note">
-        <p className="safety-hint safety-hint-icon">
-          <Icon name="shield" size={18} />
-          <span>
-            ความคิดเห็นที่คุณเขียนจะถูกส่งให้อาจารย์พิจารณาก่อนเสมอ
-            เพื่อนร่วมทีมจะไม่เห็นข้อความโดยตรง
-          </span>
+        <p className="mt-8 text-center text-xs text-muted-foreground">
+          CollabReflect · Chiang Mai University
         </p>
       </div>
     </div>

@@ -1,0 +1,99 @@
+/* ลำดับ layer (ต่ำ → สูง) — ต้องตรงกับ LAYER_ORDER ใน vite.config.ts
+   - properties/theme/base : Tailwind theme + preflight
+   - legacy          : Pico (import ใน main.tsx ผ่าน plugin legacyPico) + CSS ชุดเดิมใน styles/
+                       มีผลเฉพาะใน .pico และอยู่เหนือ preflight เพื่อให้หน้าเดิมหน้าตาเหมือนเดิมระหว่างย้าย
+   - app             : ค่า global ของ UI ใหม่ (ต้องชนะ :root ของ Pico ที่อยู่ใน legacy)
+   - components/utilities : Tailwind — ชนะทุกอย่างข้างบน
+   ย้ายหน้าครบแล้ว: ลบ import ด้านล่าง + โฟลเดอร์ styles/ + Pico ใน main.tsx/vite.config.ts + .pico ใน App.tsx */
+@layer properties, theme, base, legacy, app, components, utilities;
+
+@import "./styles/theme.css" layer(legacy);
+
+@import "tailwindcss";
+
+/* className="outline" ของปุ่ม Pico ในหน้าเดิมชนกับ utility `outline` ของ Tailwind */
+@source not inline("outline");
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+
+  --color-ramp-1: var(--ramp-1);
+  --color-ramp-2: var(--ramp-2);
+  --color-ramp-3: var(--ramp-3);
+  --color-ramp-4: var(--ramp-4);
+  --color-ramp-5: var(--ramp-5);
+
+  /* radius ใช้ค่า default ของ Tailwind (lg 8px, xl 12px, 2xl 16px)
+     design-ref ตั้ง --radius-xl = --radius + 12px = 24px ซึ่งใหญ่กว่า 2xl (16px) — สเกลกลับหัว
+     คลาสใน design-ref เขียนตามค่า default จึงไม่ override */
+
+  --font-sans: var(--font-body);
+}
+
+/* โทเคนจาก design-ref (indigo + Sarabun) */
+:root {
+  --background: #f7f7f8;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --primary: #4338ca;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2ff;
+  --secondary-foreground: #3730a3;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #059669;
+  --accent-foreground: #ffffff;
+  --border: #e4e4e7;
+  --ring: #6366f1;
+
+  --font-body: "Sarabun", system-ui, sans-serif;
+
+  /* ไล่เฉดคะแนน 1–5 (indigo สีเดียว) */
+  --ramp-1: #c7d2fe;
+  --ramp-2: #a5b4fc;
+  --ramp-3: #818cf8;
+  --ramp-4: #6366f1;
+  --ramp-5: #4338ca;
+}
+
+@layer app {
+  /* Pico ตั้ง font-size ของ :root เป็น 85% (tokens.css) ซึ่งจะทำให้ rem ของ Tailwind เล็กลง
+     ตั้งกลับเป็น 100% ที่นี่ แล้วให้ .pico ย่อข้อความของตัวเองแทน */
+  :root {
+    font-size: 100%;
+    line-height: 1.5;
+    font-family: var(--font-body);
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  .pico {
+    font-size: 85%;
+  }
+}

@@ -1,67 +1,58 @@
-import { useMatch, useNavigate } from "react-router-dom";
-import AppShell from "../../components/AppShell";
+import { useEffect, useState } from "react";
+import { Navigate, NavLink, useMatch, useParams } from "react-router-dom";
+import { api, getErrorMessage } from "../../lib/api";
 import StudentRoundsView from "./StudentRoundsView";
 import FeedbackView from "./FeedbackView";
-import type { Course, User } from "../../types";
+import type { ApiResponse, Course, Me } from "../../types";
 
 /**
- * หน้าในรายวิชาของนักศึกษา — sidebar layout สลับแท็บจาก URL
- * - /course/:id           → แท็บแบบประเมิน
- * - /course/:id/feedback   → แท็บฟีดแบ็ก
+ * (หน้าเดิม — Pico) หน้าในรายวิชาของนักศึกษา สลับแท็บจาก URL
+ * - /courses/:courseId                   → แท็บแบบประเมิน
+ * - /courses/:courseId/round/:roundId    → ทำแบบประเมิน
+ * - /courses/:courseId/feedback          → แท็บฟีดแบ็ก
  */
-export default function CourseDetailView({
-  course,
-  user,
-  onLogout,
-}: {
-  course: Course;
-  user: User;
-  onLogout: () => void;
-}) {
-  const navigate = useNavigate();
-  const active = useMatch("/course/:courseId/feedback") ? "feedback" : "rounds";
+export default function CourseDetailView({ me }: { me: Me }) {
+  const { courseId } = useParams();
+  const [courses, setCourses] = useState<Course[] | null>(null);
+  const [error, setError] = useState("");
+  const isFeedback = useMatch("/courses/:courseId/feedback") !== null;
 
-  const sidebarSlot = (
-    <>
-      <div className="sidebar-section">รายวิชา</div>
-      <div style={{ padding: "0 0.75rem", marginBottom: "0.5rem" }}>
-        <strong style={{ fontSize: "0.92rem" }}>{course.courseCode}</strong>
-        <div style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.65)", marginTop: "0.15rem" }}>
-          {course.name}
-        </div>
-      </div>
-      <button className="sidebar-back-btn" onClick={() => navigate("/")}>
-        ← เปลี่ยนรายวิชา
-      </button>
-    </>
-  );
+  useEffect(() => {
+    api
+      .get<ApiResponse<Course[]>>("/courses/my")
+      .then((res) => setCourses(res.data.data))
+      .catch((err) => setError(getErrorMessage(err)));
+  }, []);
+
+  if (error) return <article className="status-toast">{error}</article>;
+  if (!courses) return <article aria-busy="true">กำลังโหลด</article>;
+
+  const course = courses.find((c) => c.id === courseId);
+  // ไม่ได้ลงทะเบียน / id ผิด → กลับหน้ารายวิชา
+  if (!course) return <Navigate to="/courses" replace />;
+
+  const tabClass = ({ isActive }: { isActive: boolean }) =>
+    isActive ? "secondary" : "secondary outline";
 
   return (
-    <AppShell
-      user={user}
-      onLogout={onLogout}
-      nav={[
-        { key: "rounds", label: "แบบประเมิน" },
-        { key: "feedback", label: "ฟีดแบ็กจากอาจารย์" },
-      ]}
-      active={active}
-      onNavigate={(key) =>
-        navigate(
-          key === "feedback"
-            ? `/course/${course.id}/feedback`
-            : `/course/${course.id}`
-        )
-      }
-      slot={sidebarSlot}
-    >
+    <>
       <h3 className="page-heading">{course.name}</h3>
-      <p className="page-description">{course.courseCode} — ดูแบบประเมินและฟีดแบ็กจากอาจารย์</p>
+      <p className="page-description">{course.courseCode}</p>
 
-      {active === "rounds" ? (
-        <StudentRoundsView course={course} user={user} />
-      ) : (
+      <nav aria-label="แท็บรายวิชา" style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
+        <NavLink to={`/courses/${course.id}`} end role="button" className={tabClass}>
+          แบบประเมิน
+        </NavLink>
+        <NavLink to={`/courses/${course.id}/feedback`} role="button" className={tabClass}>
+          ฟีดแบ็ก
+        </NavLink>
+      </nav>
+
+      {isFeedback ? (
         <FeedbackView courseId={course.id} />
+      ) : (
+        <StudentRoundsView course={course} me={me} />
       )}
-    </AppShell>
+    </>
   );
 }

@@ -7,17 +7,17 @@ import type {
   Course,
   Group,
   Progress,
+  Me,
   Round,
-  User,
 } from "../../types";
 
 /** แท็บ "แบบประเมิน" ฝั่งนักศึกษา — ชื่อมี Student นำหน้ากันสับสนกับ instructor/RoundsView */
 export default function StudentRoundsView({
   course,
-  user,
+  me,
 }: {
   course: Course;
-  user: User;
+  me: Me;
 }) {
   const [rounds, setRounds] = useState<Round[]>([]);
   const [group, setGroup] = useState<Group | null>(null);
@@ -26,7 +26,7 @@ export default function StudentRoundsView({
   // 3d) progress ของแต่ละรอบ: roundId → Progress[]
   const [progressMap, setProgressMap] = useState<Record<string, Progress[]>>({});
   const navigate = useNavigate();
-  const roundMatch = useMatch("/course/:courseId/round/:roundId");
+  const roundMatch = useMatch("/courses/:courseId/round/:roundId");
   const activeRoundId = roundMatch?.params.roundId;
 
   const loadProgress = useCallback(async (rnds: Round[], grp: Group) => {
@@ -67,7 +67,7 @@ export default function StudentRoundsView({
   if (loading) return <article aria-busy="true">กำลังโหลด</article>;
   if (error) return <article className="status-toast">{error}</article>;
 
-  // ทำแบบประเมิน — เปิดจาก URL /course/:id/round/:roundId
+  // ทำแบบประเมิน — เปิดจาก URL /courses/:courseId/round/:roundId
   if (activeRoundId) {
     const round = rounds.find((r) => r.id === activeRoundId);
     if (group && round)
@@ -75,16 +75,16 @@ export default function StudentRoundsView({
         <EvaluationWizard
           round={round}
           group={group}
-          user={user}
+          me={me}
           onExit={() => {
-            navigate(`/course/${course.id}`);
+            navigate(`/courses/${course.id}`);
             // รีโหลด progress เมื่อกลับจาก wizard
             loadProgress(rounds, group);
           }}
         />
       );
     // ไม่มีกลุ่ม / หา round ไม่เจอ (id ผิด) → กลับหน้ารายการ
-    return <Navigate to={`/course/${course.id}`} replace />;
+    return <Navigate to={`/courses/${course.id}`} replace />;
   }
 
   if (!group)
@@ -151,7 +151,7 @@ export default function StudentRoundsView({
                 <button
                   style={{ width: "auto" }}
                   className={allDone ? "secondary outline" : undefined}
-                  onClick={() => navigate(`/course/${course.id}/round/${r.id}`)}
+                  onClick={() => navigate(`/courses/${course.id}/round/${r.id}`)}
                   data-cy={`enter-round-${r.id}`}
                 >
                   {allDone

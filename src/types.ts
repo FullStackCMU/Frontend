@@ -1,6 +1,31 @@
 export type Role = "student" | "instructor";
 export type QuestionType = "scale" | "text";
 
+export type AccountType = "StdAcc" | "MISEmpAcc";
+
+/** ผู้ใช้ที่ login อยู่ — ตรงกับ GET /auth/me (แถว users) */
+export interface Me {
+  id: string;
+  cmuAccount: string;
+  studentId: string | null;
+  firstnameTh: string | null;
+  lastnameTh: string | null;
+  firstnameEn: string | null;
+  lastnameEn: string | null;
+  accountType: AccountType | null;
+  firstLoginAt: string | null;
+  lastLoginAt: string | null;
+  createdAt: string | null;
+}
+
+/** GET /consents/me, POST /consents */
+export interface ConsentStatus {
+  policyVersion: string;
+  accepted: boolean;
+  acceptedAt: string | null;
+}
+
+/** @deprecated ข้อมูล /users รูปแบบเดิม — ใช้เฉพาะหน้าอาจารย์ที่ยังไม่ได้ย้าย (CoursesView, GroupsView) */
 export interface User {
   id: string;
   username: string;

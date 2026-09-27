@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, getErrorMessage } from "../lib/api";
+import { displayName } from "../lib/user";
 import type {
   Answer,
   ApiResponse,
   Group,
+  Me,
   Progress,
   Question,
   Round,
-  User,
 } from "../types";
 
 type Draft = Record<string, { scoreValue?: number; textValue?: string }>;
@@ -15,12 +16,12 @@ type Draft = Record<string, { scoreValue?: number; textValue?: string }>;
 export default function EvaluationWizard({
   round,
   group,
-  user,
+  me,
   onExit,
 }: {
   round: Round;
   group: Group;
-  user: User;
+  me: Me;
   onExit: () => void;
 }) {
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -37,9 +38,9 @@ export default function EvaluationWizard({
 
   //ตนเองก่อน แล้วตามด้วยเพื่อนตามลำดับสมาชิก
   const targets = [
-    { id: user.id, name: user.name, isSelf: true },
+    { id: me.id, name: displayName(me), isSelf: true },
     ...group.members
-      .filter((m) => m.id !== user.id)
+      .filter((m) => m.id !== me.id)
       .map((m) => ({ id: m.id, name: m.name, isSelf: false })),
   ];
 

@@ -1,29 +1,19 @@
-/* ===== Global typography ===== */
+/* ===== Typography (legacy) =====
+   จำกัดไว้ใน .pico — UI ใหม่ (Tailwind) ตั้ง html/body เองใน src/index.css */
 
-html,
-body {
-  margin: 0;
-  padding: 0;
+.pico {
+  min-height: 100vh;
   background: var(--cr-bg);
   color: var(--cr-text);
   font-family: "IBM Plex Sans Thai", sans-serif;
   line-height: 1.75;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+.pico :is(h1, h2, h3, h4, h5, h6) {
   font-family: "IBM Plex Sans Thai", sans-serif;
   line-height: 1.45;
   letter-spacing: 0;
   text-transform: none;
-}
-
-#root {
-  min-height: 100vh;
 }
 
 /* ===== Animations ===== */
@@ -54,7 +44,7 @@ h6 {
 
 /* ===== Global focus ===== */
 
-:focus-visible {
+.pico :focus-visible {
   outline: 3px solid var(--cr-secondary);
   outline-offset: 2px;
 }
