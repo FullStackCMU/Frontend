@@ -1,10 +1,54 @@
 import { useEffect, useState } from "react";
-import { Quote } from "lucide-react";
+import { Quote, Sparkles, TriangleAlert } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { Modal } from "../../../components/ui/Modal";
 import { api, getErrorMessage } from "../../../lib/api";
 import { cn } from "../../../lib/cn";
+import { FLAG_LABEL } from "../../../lib/evaluation";
 import type { ApiResponse, StudentFeedbackDetail } from "../../../types";
+
+const ACTION_LABEL = {
+  edited: { label: "แก้แล้ว", className: "bg-emerald-50 text-emerald-700" },
+  ignored: { label: "ส่งตามนี้", className: "bg-amber-50 text-amber-700" },
+  pending: { label: "ยังไม่ส่ง", className: "bg-muted text-muted-foreground" },
+} as const;
+
+/** AI เตือนความเห็นที่นักศึกษาคนนี้เขียนกี่ครั้ง แก้/ไม่แก้ */
+function WrittenFlags({ flags }: { flags: StudentFeedbackDetail["writtenFlags"] }) {
+  return (
+    <section className="flex flex-col gap-2 rounded-xl border border-border px-4 py-3">
+      <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+        <Sparkles size={13} className="text-indigo-500" />
+        คำเตือนจาก AI ในความเห็นที่นักศึกษาคนนี้เขียน
+      </h3>
+      {flags.total === 0 ? (
+        <p className="text-sm text-muted-foreground">ไม่ถูกเตือนในรอบนี้</p>
+      ) : (
+        <>
+          <p className="text-sm text-foreground">
+            ถูกเตือน <span className="font-bold">{flags.total}</span> ครั้ง · แก้แล้ว{" "}
+            <span className="font-bold text-emerald-700">{flags.edited}</span> · ส่งตามนี้{" "}
+            <span className="font-bold text-amber-700">{flags.ignored}</span>
+            {flags.pending > 0 && <> · ยังไม่ส่ง {flags.pending}</>}
+          </p>
+          <ul className="flex flex-col gap-1 text-xs text-muted-foreground">
+            {flags.items.map((f, i) => (
+              <li key={i} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <span>
+                  ข้อ {f.questionNo ?? "?"} ถึง {f.isSelf ? "ตัวเอง" : (f.evaluateeName ?? "—")}
+                </span>
+                <span className="font-medium text-foreground">{FLAG_LABEL[f.category]}</span>
+                <span className={cn("rounded-full px-2 py-0.5 font-medium", ACTION_LABEL[f.studentAction].className)}>
+                  {ACTION_LABEL[f.studentAction].label}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
 
 /** คะแนนรายคนที่นักศึกษาได้รับ + ความเห็นทั้งหมดพร้อมชื่อผู้เขียน (เฉพาะอาจารย์) */
 export default function StudentDetailModal({
@@ -98,7 +142,8 @@ export default function StudentDetailModal({
                     </h3>
                     <ul className="flex flex-col gap-2">
                       {data.evaluations.map((e) => {
-                        const comment = e.answers.find((a) => a.questionId === q.id)?.comment;
+                        const answer = e.answers.find((a) => a.questionId === q.id);
+                        const comment = answer?.comment;
                         if (!comment) return null;
                         return (
                           <li
@@ -110,6 +155,12 @@ export default function StudentDetailModal({
                               {e.evaluator.isSelf && " (เขียนถึงตัวเอง)"}
                             </p>
                             <p className="text-foreground">{comment}</p>
+                            {answer?.ignoredWarning && (
+                              <p className="mt-1.5 flex items-center gap-1 text-xs text-amber-700">
+                                <TriangleAlert size={12} className="shrink-0" />
+                                AI เตือนว่าอาจ{FLAG_LABEL[answer.ignoredWarning]} ผู้เขียนเลือกส่งตามนี้
+                              </p>
+                            )}
                           </li>
                         );
                       })}
@@ -118,6 +169,8 @@ export default function StudentDetailModal({
                 ))}
               </>
             )}
+
+            <WrittenFlags flags={data.writtenFlags} />
           </>
         )}
       </div>

@@ -55,15 +55,22 @@ export async function fetchEvaluation(roundId: string) {
   return res.data.data;
 }
 
-/** บันทึกร่าง — ส่งคำตอบทั้งหมดที่มี (backend แทนที่ของเดิมทั้งชุด) */
-export async function saveEvaluationDraft(roundId: string, answers: EvalAnswer[]) {
-  const res = await api.put<ApiResponse<Evaluation>>(`/answers/${roundId}/draft`, { answers });
+/**
+ * บันทึกร่าง — ส่งคำตอบทั้งหมดที่มี (backend แทนที่ของเดิมทั้งชุด)
+ * checkQuestionIds: ให้ AI ตรวจความเห็นของคำถามเหล่านี้ด้วย → ผลอยู่ใน warnings
+ */
+export async function saveEvaluationDraft(roundId: string, answers: EvalAnswer[], checkQuestionIds?: string[]) {
+  const res = await api.put<ApiResponse<Evaluation>>(`/answers/${roundId}/draft`, { answers, checkQuestionIds });
   return res.data.data;
 }
 
-/** ส่งแบบประเมิน — ต้องตอบครบ ส่งแล้วแก้ไม่ได้ */
-export async function submitEvaluation(roundId: string, answers: EvalAnswer[]) {
-  const res = await api.post<ApiResponse<Evaluation>>(`/answers/${roundId}/submit`, { answers });
+/**
+ * ส่งแบบประเมิน — ต้องตอบครบ ส่งแล้วแก้ไม่ได้
+ * AI เตือนความเห็นที่ไม่อยู่ใน acknowledged (answerKey ที่กด "ส่งตามนี้") → ยังไม่ส่ง คืน warnings มาแทน
+ * (ดูได้จาก submission.status ยังไม่เป็น "submitted")
+ */
+export async function submitEvaluation(roundId: string, answers: EvalAnswer[], acknowledged: string[]) {
+  const res = await api.post<ApiResponse<Evaluation>>(`/answers/${roundId}/submit`, { answers, acknowledged });
   return res.data.data;
 }
 

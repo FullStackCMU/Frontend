@@ -1,6 +1,13 @@
-import type { EvalAnswer, EvalQuestion, Evaluation } from "../types";
+import type { EvalAnswer, EvalQuestion, Evaluation, FlagCategory } from "../types";
 
 export const MAX_COMMENT_LENGTH = 500; // ตรงกับ Backend/src/routes/answer.ts
+
+export const FLAG_LABEL: Record<FlagCategory, string> = {
+  profanity: "หยาบคาย",
+  personal_attack: "โจมตีตัวบุคคล",
+  negative_tone: "เชิงลบไม่สร้างสรรค์",
+  other: "อื่นๆ",
+};
 
 /** คำตอบของ (คำถาม, ผู้ถูกประเมิน) — key = `${questionId}:${evaluateeId}` */
 export type AnswerMap = Record<string, { score: number | null; comment: string }>;

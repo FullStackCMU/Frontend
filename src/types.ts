@@ -177,6 +177,20 @@ export interface Evaluation {
   answers: EvalAnswer[];
   /** เหตุผลที่ยังบันทึก/ส่งไม่ได้ — null = ทำได้ */
   blocker: string | null;
+  /** คำเตือนจาก AI ของความเห็นที่ตรวจในคำขอนั้น (บันทึกร่างพร้อมตรวจ / กดส่ง) */
+  warnings: CommentWarning[];
+}
+
+export type FlagCategory = "profanity" | "personal_attack" | "negative_tone" | "other";
+export type FlagSeverity = "low" | "medium" | "high";
+
+/** AI เตือนความเห็นช่องหนึ่ง — เตือนเฉยๆ นักศึกษาเลือกแก้หรือส่งตามนี้ได้ */
+export interface CommentWarning {
+  questionId: string;
+  evaluateeId: string;
+  category: FlagCategory;
+  severity: FlagSeverity;
+  suggestion: string;
 }
 
 // ───────────── ผลประเมิน / แบบประเมินรวมทุกวิชา ─────────────
@@ -270,6 +284,27 @@ export interface StudentFeedbackDetail {
   scale: { min: number; max: number };
   evaluations: {
     evaluator: { id: string; name: string; isSelf: boolean };
-    answers: { questionId: string; score: number | null; comment: string | null }[];
+    answers: {
+      questionId: string;
+      score: number | null;
+      comment: string | null;
+      /** ผู้เขียนถูก AI เตือนแล้วเลือก "ส่งตามนี้" */
+      ignoredWarning: FlagCategory | null;
+    }[];
   }[];
+  /** AI เตือนความเห็นที่นักศึกษาคนนี้เขียนในรอบนี้ */
+  writtenFlags: {
+    total: number;
+    edited: number;
+    ignored: number;
+    pending: number;
+    items: {
+      questionNo: number | null;
+      evaluateeName: string | null;
+      isSelf: boolean;
+      category: FlagCategory;
+      severity: FlagSeverity;
+      studentAction: "pending" | "edited" | "ignored";
+    }[];
+  };
 }
