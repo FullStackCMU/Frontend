@@ -12,15 +12,12 @@ import GroupsTab from "./GroupsTab";
 import RoundsTab from "./RoundsTab";
 import UploadStudentsModal from "./UploadStudentsModal";
 
-/**
- * /courses/:courseId → นักศึกษา, /groups → กลุ่ม, /rounds → รอบประเมิน
- */
 export default function CourseDetail() {
   const { courseId = "" } = useParams();
   const [course, setCourse] = useState<Course | null>(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
-  // เพิ่มเมื่อ import สำเร็จ → แท็บโหลดข้อมูลใหม่ (ใช้เป็น key)
+  // ใช้เป็น key ให้แท็บโหลดใหม่หลัง import
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {

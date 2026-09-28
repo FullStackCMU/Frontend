@@ -20,9 +20,7 @@
   --color-ramp-4: var(--ramp-4);
   --color-ramp-5: var(--ramp-5);
 
-  /* radius ใช้ค่า default ของ Tailwind (lg 8px, xl 12px, 2xl 16px)
-     design-ref ตั้ง --radius-xl = --radius + 12px = 24px ซึ่งใหญ่กว่า 2xl (16px) — สเกลกลับหัว
-     คลาสใน design-ref เขียนตามค่า default จึงไม่ override */
+  /* ไม่ override radius — ใช้ค่า default ของ Tailwind */
 
   --font-sans: var(--font-body);
 }
@@ -43,10 +41,9 @@
 
   --font-body: "Sarabun", system-ui, sans-serif;
 
-  /* ความสูงแถบเมนูล่างบนมือถือ (นักศึกษา) — แถบ sticky ด้านล่างของหน้าต้องเว้นระยะนี้ */
+  /* แถบ sticky ด้านล่างของหน้าต้องเว้นระยะนี้ */
   --bottom-nav-h: calc(3.75rem + env(safe-area-inset-bottom));
 
-  /* ไล่เฉดคะแนน 1–5 (indigo สีเดียว) */
   --ramp-1: #c7d2fe;
   --ramp-2: #a5b4fc;
   --ramp-3: #818cf8;

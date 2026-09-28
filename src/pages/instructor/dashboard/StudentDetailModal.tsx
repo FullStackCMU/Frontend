@@ -13,7 +13,6 @@ const ACTION_LABEL = {
   pending: { label: "ยังไม่ส่ง", className: "bg-muted text-muted-foreground" },
 } as const;
 
-/** AI เตือนความเห็นที่นักศึกษาคนนี้เขียนกี่ครั้ง แก้/ไม่แก้ */
 function WrittenFlags({ flags }: { flags: StudentFeedbackDetail["writtenFlags"] }) {
   return (
     <section className="flex flex-col gap-2 rounded-xl border border-border px-4 py-3">
@@ -50,7 +49,6 @@ function WrittenFlags({ flags }: { flags: StudentFeedbackDetail["writtenFlags"] 
   );
 }
 
-/** คะแนนรายคนที่นักศึกษาได้รับ + ความเห็นทั้งหมดพร้อมชื่อผู้เขียน (เฉพาะอาจารย์) */
 export default function StudentDetailModal({
   roundId,
   studentId,

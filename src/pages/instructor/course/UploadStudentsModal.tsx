@@ -59,7 +59,7 @@ export default function UploadStudentsModal({
     setSubmitting(true);
     setServerError("");
     try {
-      // ส่งทุกแถว (รวมแถวที่หน้าเว็บตรวจว่าผิด) ให้ backend สรุปผลรวมทีเดียว
+      // ส่งทุกแถวรวมแถวที่ผิด ให้ backend สรุปทีเดียว
       const res = await api.post<ApiResponse<ImportResult>>(`/courses/${courseId}/students/import`, {
         rows: rows.map(({ line, studentId, cmuAccount, nameTh }) => ({ line, studentId, cmuAccount, nameTh })),
       });

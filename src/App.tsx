@@ -19,7 +19,6 @@ import CourseDetail from "./pages/instructor/course/CourseDetail";
 import DashboardPage from "./pages/instructor/dashboard/DashboardPage";
 import type { ConsentStatus, Me } from "./types";
 
-// หน้าตัวอย่าง UI primitives — มีเฉพาะตอน dev (build จริงตัดทิ้ง)
 const UiPreview = import.meta.env.DEV
   ? lazy(() => import("./pages/dev/UiPreview"))
   : null;
@@ -31,7 +30,7 @@ type Session =
   // consent = null → ไม่ต้องขอ (บุคลากร — consent ครอบคลุมข้อความที่นักศึกษาเขียนเท่านั้น)
   | { status: "authenticated"; me: Me; consent: ConsentStatus | null };
 
-// session อยู่ใน httpOnly cookie → ถาม backend ทุกครั้งที่เปิดแอป
+// cookie เป็น httpOnly อ่านจาก JS ไม่ได้ ต้องถาม backend
 async function loadSession(): Promise<Session> {
   const me = await fetchMe();
   if (!me) return { status: "anonymous" };
@@ -61,7 +60,6 @@ function App() {
     };
   }, []);
 
-  // API ตอบ 401 ระหว่างใช้งาน (cookie หมดอายุ) → กลับหน้า login
   useEffect(() => {
     function onUnauthorized() {
       setSession({ status: "anonymous" });
@@ -70,9 +68,7 @@ function App() {
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
   }, []);
 
-  // ลบ session ของระบบแล้วกลับหน้า login (route ของ anonymous พาไป /login เอง)
-  // request ล้มเหลวก็ยังถือว่า logout ฝั่งหน้าเว็บ
-  // session ที่ oauth497 ยังอยู่ — login ใหม่จะได้บัญชีเดิม (oauth497 ไม่รองรับ end-session / prompt=login)
+  // oauth497 ยังจำ session — login ใหม่จะได้บัญชีเดิม (ไม่รองรับ end-session)
   async function handleLogout() {
     await logout().catch(() => {});
     setSession({ status: "anonymous" });
@@ -117,7 +113,6 @@ function App() {
     );
   }
 
-  // นักศึกษาที่ยังไม่ยอมรับนโยบายเวอร์ชันปัจจุบัน → ต้องผ่านหน้า consent ก่อนทุกหน้า
   const { me, consent } = session;
   if (consent && !consent.accepted) {
     return (

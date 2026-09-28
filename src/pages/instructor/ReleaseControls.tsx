@@ -21,16 +21,12 @@ const RELEASE_TEXT: Record<ReleaseKind, { label: string; released: string; effec
   },
 };
 
-/**
- * ปุ่มเผยแพร่/ยกเลิกเผยแพร่ คะแนน และ ฟีดแบ็ก ของรอบ (แยกกัน) พร้อมถามยืนยัน
- * ใช้ PATCH /rounds/:id/release — ใช้ได้เฉพาะรอบที่ปิดรับแล้ว (ผู้เรียกเช็คก่อนแสดง)
- */
+// ใช้ได้เฉพาะรอบที่ปิดรับแล้ว — ผู้เรียกต้องเช็คก่อนแสดง
 export default function ReleaseControls({
   round,
   onUpdated,
 }: {
   round: RoundSummary;
-  /** รายการรอบทั้งวิชาหลังอัปเดต (endpoint คืนทั้งหมด) */
   onUpdated: (rounds: CourseRound[]) => void;
 }) {
   const [pending, setPending] = useState<{ what: ReleaseKind; release: boolean } | null>(null);

@@ -11,7 +11,6 @@ import { formatCourseCode } from "../../../lib/course";
 import { formatDateTime } from "../../../lib/date";
 import type { ApiResponse, FeedbackListItem, RoundFeedback } from "../../../types";
 
-// ไล่เฉด indigo สีเดียว ไม่ใช้แดง
 const RAMP = ["bg-ramp-1", "bg-ramp-2", "bg-ramp-3", "bg-ramp-4", "bg-ramp-5"];
 
 function Section({ title, icon, children }: { title: string; icon?: ReactNode; children: ReactNode }) {
@@ -55,7 +54,6 @@ function Bar({
   );
 }
 
-/** ข้อสังเกตเบาๆ เมื่อคะแนนที่ให้ตัวเองต่างจากเพื่อนตั้งแต่ 1 คะแนน */
 function gapNote(peer: number | null, self: number | null) {
   if (peer === null || self === null) return null;
   if (self - peer >= 1) return "คุณให้คะแนนตัวเองสูงกว่าที่เพื่อนให้";
@@ -138,7 +136,7 @@ function Pending({ data }: { data: RoundFeedback }) {
   );
 }
 
-/** backend ตัดส่วนที่ยังไม่เผยแพร่ออกให้แล้ว */
+// backend ตัดส่วนที่ยังไม่เผยแพร่ออกให้แล้ว
 export default function FeedbackPage() {
   const { roundId = "" } = useParams();
   const [data, setData] = useState<RoundFeedback | null>(null);
@@ -172,7 +170,7 @@ export default function FeedbackPage() {
     );
 
   const { round, course, scores, comments } = data;
-  // "เผยแพร่แล้ว" ตามอาจารย์ — แต่อาจไม่มีข้อมูลถ้าผู้ประเมินไม่พอ (withheldReason)
+  // เผยแพร่แล้วแต่อาจไม่มีข้อมูลถ้าผู้ประเมินไม่พอ
   const released = !!(round.scoresReleasedAt || round.feedbackReleasedAt);
   const releasedAt = [round.scoresReleasedAt, round.feedbackReleasedAt].filter(Boolean).sort().at(-1);
   const courseLabel = formatCourseCode(course.courseCode, course.section);

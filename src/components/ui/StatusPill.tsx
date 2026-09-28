@@ -1,7 +1,6 @@
 import { cn } from "../../lib/cn";
 import { STATUS, TONE_CLASS, TONE_DOT, type Status } from "../../lib/status";
 
-/** label = เปลี่ยนข้อความตามมุมมองผู้ใช้ (สียังตาม mapping เดียวกัน) */
 export function StatusPill({ status, label: labelOverride }: { status: Status; label?: string }) {
   const { label: defaultLabel, tone } = STATUS[status];
   const label = labelOverride ?? defaultLabel;

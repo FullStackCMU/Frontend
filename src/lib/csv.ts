@@ -1,7 +1,4 @@
-/**
- * อ่านไฟล์ CSV เป็นข้อความ — ลอง UTF-8 ก่อน ถ้าไม่ใช่ (เช่น Excel ภาษาไทยบน Windows
- * บันทึกเป็น Windows-874/TIS-620) ใช้ windows-874 แทน ไม่งั้นชื่อไทยจะเพี้ยน
- */
+// Excel ภาษาไทยบน Windows บันทึกเป็น Windows-874 — UTF-8 ไม่ผ่านให้ลองตัวนี้
 export async function readCsvFile(file: File) {
   const buffer = await file.arrayBuffer();
   let text: string;
@@ -13,7 +10,6 @@ export async function readCsvFile(file: File) {
   return text.replace(/^﻿/, "");
 }
 
-/** แยก CSV ตาม RFC 4180 (รองรับ "..." ที่มี , หรือขึ้นบรรทัดใหม่ และ "" = ") — ข้ามบรรทัดว่าง */
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -48,16 +44,15 @@ function parseCsv(text: string): string[][] {
 }
 
 export interface StudentCsvRow {
-  /** แถวที่ (หัวตาราง = แถว 1, ไม่นับบรรทัดว่าง) — ใช้บอกผู้ใช้ว่าแถวไหนผิด */
+  // หัวตาราง = แถว 1 ไม่นับบรรทัดว่าง
   line: number;
   studentId: string;
   cmuAccount: string;
   nameTh: string;
-  /** ผลตรวจเบื้องต้นฝั่งหน้าเว็บ (backend ตรวจซ้ำและเทียบกับข้อมูลในระบบอีกที) */
+  // backend ตรวจซ้ำอีกที
   error?: string;
 }
 
-// ชื่อหัวคอลัมน์ที่รับได้ (ตัวพิมพ์เล็ก ไม่สนช่องว่าง)
 const HEADERS = {
   studentId: ["student_id", "studentid", "รหัสนักศึกษา"],
   cmuAccount: ["cmu_account", "cmuaccount", "email", "อีเมล"],
@@ -69,10 +64,6 @@ const HEADERS = {
 const STUDENT_ID_RE = /^\d{9}$/;
 const CMU_ACCOUNT_RE = /^[a-z0-9._-]+@cmu\.ac\.th$/;
 
-/**
- * แปลง CSV รายชื่อนักศึกษา — ต้องมีคอลัมน์ student_id, cmu_account และ name_th
- * (หรือแยกเป็น firstname_th + lastname_th) คืน error ถ้าหาคอลัมน์ไม่เจอ
- */
 export function parseStudentCsv(
   text: string
 ): { rows: StudentCsvRow[]; error?: undefined } | { rows?: undefined; error: string } {

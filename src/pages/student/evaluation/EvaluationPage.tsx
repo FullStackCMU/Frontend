@@ -23,7 +23,7 @@ import type { CommentWarning, Course, EvalTarget, Evaluation } from "../../../ty
 const PEER_NOTE = "เพื่อนคนนี้จะเห็นความเห็นแบบไม่ระบุชื่อ หลังอาจารย์เผยแพร่ผล";
 const SELF_NOTE = "ความเห็นถึงตัวเอง อาจารย์ผู้สอนเท่านั้นที่เห็น";
 
-/** คำเตือนของความเห็นช่องหนึ่ง + ข้อความตอนที่ตรวจ (แก้ข้อความแล้ว คำเตือนนี้ไม่ใช้แล้ว) */
+// แก้ข้อความแล้วคำเตือนนี้ไม่ใช้แล้ว (เทียบกับ text)
 type WarningState = Record<string, { warning: CommentWarning; text: string }>;
 
 type SaveState =
@@ -157,7 +157,6 @@ function TextCard({
   target: EvalTarget;
   value: string;
   onChange: (text: string) => void;
-  /** คำเตือนของข้อความปัจจุบัน (null = ผ่าน / ยังไม่ได้ตรวจ / แก้แล้วรอตรวจใหม่) */
   warning: CommentWarning | null;
   acknowledged: boolean;
   onAcknowledge: (value: boolean) => void;
@@ -207,13 +206,7 @@ function TextCard({
 
 const DECIDE_NOTICE = "มีความเห็นที่ AI แนะนำให้ทบทวน — เลือก “แก้ข้อความ” หรือ “ส่งตามนี้” ก่อนไปต่อ";
 
-/**
- * บันทึกร่างทุกครั้งที่เปลี่ยนคำถาม
- *
- * AI ตรวจความเห็น (เตือน ไม่บล็อก): ตอนกด "ถัดไป" จากคำถาม text (เฉพาะข้อความที่เปลี่ยนจากที่ตรวจล่าสุด)
- * และตอนกดส่ง (backend ตรวจทุกข้อความ ข้อความที่เคยตรวจแล้วได้ผลจาก cache)
- * ถูกเตือน → เลือก แก้ข้อความ หรือ "ส่งตามนี้" ก่อนไปต่อ — ตรวจไม่ได้ (error / เกิน 5 วินาที) = ผ่าน
- */
+// AI ตรวจตอนกดถัดไปจากคำถาม text (เฉพาะข้อความที่เปลี่ยน) และตอนกดส่ง
 export default function EvaluationPage({
   course,
   data,
@@ -234,19 +227,17 @@ export default function EvaluationPage({
 
   const [answers, setAnswers] = useState<AnswerMap>(() => toAnswerMap(data.answers));
   const [dirty, setDirty] = useState(false);
-  // นับการแก้ — กันกรณีแก้ต่อระหว่างที่กำลังบันทึก แล้วถูกนับว่าบันทึกแล้ว
+  // กันแก้ต่อระหว่างบันทึกแล้วถูกนับว่าบันทึกแล้ว
   const editVersion = useRef(0);
   const [saveState, setSaveState] = useState<SaveState>({ kind: "idle" });
   const [submitError, setSubmitError] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [checking, setChecking] = useState(false);
-  // key = answerKey: ข้อความล่าสุดที่ AI ตรวจแล้ว / คำเตือน / ข้อความที่นักศึกษาเลือก "ส่งตามนี้"
   const [checked, setChecked] = useState<Record<string, string>>({});
   const [warnings, setWarnings] = useState<WarningState>({});
   const [acknowledged, setAcknowledged] = useState<Record<string, string>>({});
   const [warningNotice, setWarningNotice] = useState("");
 
-  // ปิดแท็บ/รีเฟรชทั้งที่ยังไม่บันทึก → browser ถามยืนยัน
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -267,7 +258,6 @@ export default function EvaluationPage({
 
   const commentOf = (map: AnswerMap, key: string) => map[key]?.comment ?? "";
 
-  /** คำเตือนที่ยังใช้กับข้อความปัจจุบัน (แก้ข้อความแล้ว = รอตรวจใหม่) */
   function activeWarning(key: string, state = warnings) {
     const w = state[key];
     return w && w.text === commentOf(answers, key) ? w.warning : null;
@@ -285,7 +275,6 @@ export default function EvaluationPage({
     setWarningNotice("");
   }
 
-  /** จำผลตรวจของช่อง keys (ข้อความตอนส่ง) — คำเตือนเก่าของช่องเหล่านี้แทนด้วยผลใหม่ คืน state ใหม่ */
   function rememberCheck(sent: AnswerMap, keys: string[], result: CommentWarning[]): WarningState {
     setChecked((prev) => ({ ...prev, ...Object.fromEntries(keys.map((k) => [k, commentOf(sent, k)])) }));
     const next = { ...warnings };
@@ -298,10 +287,7 @@ export default function EvaluationPage({
     return next;
   }
 
-  /**
-   * บันทึกร่าง ถ้าระบุ checkQuestionId ให้ AI ตรวจข้อความของคำถามนั้นที่ยังไม่เคยตรวจ/แก้หลังตรวจด้วย
-   * คืน null = บันทึกไม่สำเร็จ, ไม่งั้นคืนคำเตือนล่าสุด
-   */
+  // คืน null = บันทึกไม่สำเร็จ
   async function save(checkQuestionId?: string): Promise<WarningState | null> {
     const toCheck = checkQuestionId
       ? data.targets
@@ -382,7 +368,7 @@ export default function EvaluationPage({
     onChange(updated);
 
     if (updated.submission?.status !== "submitted") {
-      // AI เตือนข้อความที่ยังไม่ได้เลือก → ยังไม่ส่ง พาไปคำถามแรกที่มีคำเตือน
+      // ยังไม่ส่ง = AI เตือนความเห็นที่ยังไม่ได้เลือก
       const latest = rememberCheck(
         sent,
         Object.keys(sent).filter((k) => sent[k].comment.trim()),
@@ -394,7 +380,7 @@ export default function EvaluationPage({
       setWarningNotice("มีความเห็นที่ AI แนะนำให้ทบทวนก่อนส่ง — เลือก “แก้ข้อความ” หรือ “ส่งตามนี้” แล้วกดส่งอีกครั้ง");
       return;
     }
-    // ส่งแล้ว → data.blocker ไม่ว่าง → EvaluationFlow พากลับหน้าแรกของรอบ (หน้าส่งเรียบร้อย)
+    // blocker ไม่ว่างแล้ว EvaluationFlow จะพากลับหน้าแรกของรอบเอง
     navigate(roundUrl, { replace: true });
   }
 
@@ -420,7 +406,7 @@ export default function EvaluationPage({
           />
         </div>
 
-        {/* ความคืบหน้า — มือถือต้องอยู่ใต้ header ของ AppLayout (h-12) */}
+        {/* มือถือต้องอยู่ใต้ header ของ AppLayout (h-12) */}
         <div className="sticky top-12 z-10 border-b border-border bg-card px-4 pt-4 pb-3 min-[900px]:top-0 min-[900px]:px-8">
           <div className="mb-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
             <span className="font-medium whitespace-nowrap text-foreground">
@@ -497,7 +483,7 @@ export default function EvaluationPage({
           </div>
         </div>
 
-        {/* ปุ่มนำทาง — มือถือต้องอยู่เหนือแถบเมนูล่าง */}
+        {/* มือถือต้องอยู่เหนือแถบเมนูล่าง */}
         <div className="sticky bottom-0 border-t border-border bg-card px-4 py-4 max-[899px]:bottom-(--bottom-nav-h) min-[900px]:px-8">
           <div className="flex gap-3">
             <Button

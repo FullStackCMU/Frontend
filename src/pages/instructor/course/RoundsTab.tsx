@@ -13,7 +13,7 @@ import EditRoundModal from "./EditRoundModal";
 import GenerateRoundsModal from "./GenerateRoundsModal";
 import ReleaseControls from "../ReleaseControls";
 
-type Pending = { round: CourseRound } | null; // ยืนยันการลบรอบ
+type Pending = { round: CourseRound } | null;
 
 function Progress({ submitted, total }: { submitted: number; total: number }) {
   const pct = total === 0 ? 0 : Math.round((submitted / total) * 100);
@@ -119,7 +119,7 @@ export default function RoundsTab({ courseId }: { courseId: string }) {
       .catch((err) => setError(getErrorMessage(err)));
   }, [courseId]);
 
-  // ทุก endpoint ที่แก้รอบคืนรายการรอบทั้งวิชา (เลขรอบอาจเลื่อนหลังลบ)
+  // endpoint คืนรอบทั้งวิชา (เลขรอบอาจเลื่อนหลังลบ)
   function applyRounds(next: CourseRound[]) {
     setRounds(next);
     setGenerating(false);

@@ -7,7 +7,6 @@ const TONE = {
   warning: { box: "border-amber-200 bg-amber-50 text-amber-800", Icon: TriangleAlert },
 };
 
-/** กล่องข้อความแจ้งเตือน — error มี role="alert" ให้ screen reader อ่านทันที */
 export function Alert({
   tone = "error",
   className,

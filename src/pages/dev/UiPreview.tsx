@@ -18,7 +18,6 @@ const ROUND_SAMPLES = [
   { label: "ปิดแล้ว ตั้ง release ไว้พรุ่งนี้", opensAt: at(-14), closesAt: at(-7), feedbackReleasedAt: at(1) },
 ];
 
-/** หน้าตัวอย่าง UI primitives — เปิดได้เฉพาะ dev (`/dev/ui`) */
 export default function UiPreview() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-10">

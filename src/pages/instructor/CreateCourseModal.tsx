@@ -67,7 +67,7 @@ export default function CreateCourseModal({
     }
   }
 
-  // aria ของช่องที่มี error/hint (id ตรงกับที่ Field สร้าง)
+  // id ต้องตรงกับที่ Field สร้าง
   const describe = (name: keyof Errors, hasHint = false) => ({
     "aria-invalid": errors[name] ? true : undefined,
     "aria-describedby": errors[name] ? `${name}-error` : hasHint ? `${name}-hint` : undefined,

@@ -1,18 +1,16 @@
 import axios from "axios";
 import type { ApiResponse, ConsentStatus, EvalAnswer, Evaluation, Me } from "../types";
 
-// session อยู่ใน httpOnly cookie (cr_token) ที่ backend ตั้งตอน /auth/callback
-// เรียกผ่าน /api (same-origin ผ่าน vite proxy / nginx) browser จึงแนบ cookie ให้เอง
+// same-origin ผ่าน /api (vite proxy / nginx) browser จึงแนบ cookie ให้เอง
 export const api = axios.create({
   baseURL: "/api",
 });
 
-/** ปุ่ม login ต้องเป็นการเปลี่ยนหน้าเต็ม (ไม่ใช่ XHR) เพราะ backend redirect ไปหน้า CMU */
+// ต้องเปลี่ยนหน้าเต็ม ไม่ใช่ XHR เพราะ backend redirect ไป CMU
 export const LOGIN_URL = "/api/auth/login";
 
 export const UNAUTHORIZED_EVENT = "cr-unauthorized";
 
-// session หมดอายุระหว่างใช้งาน → ให้ App กลับไปหน้า login
 api.interceptors.response.use(
   (res) => res,
   (err) => {
@@ -23,7 +21,6 @@ api.interceptors.response.use(
   }
 );
 
-/** ผู้ใช้ที่ login อยู่ หรือ null ถ้ายังไม่ได้ login */
 export async function fetchMe(): Promise<Me | null> {
   try {
     const res = await api.get<ApiResponse<Me>>("/auth/me");
@@ -55,20 +52,12 @@ export async function fetchEvaluation(roundId: string) {
   return res.data.data;
 }
 
-/**
- * บันทึกร่าง — ส่งคำตอบทั้งหมดที่มี (backend แทนที่ของเดิมทั้งชุด)
- * checkQuestionIds: ให้ AI ตรวจความเห็นของคำถามเหล่านี้ด้วย → ผลอยู่ใน warnings
- */
 export async function saveEvaluationDraft(roundId: string, answers: EvalAnswer[], checkQuestionIds?: string[]) {
   const res = await api.put<ApiResponse<Evaluation>>(`/answers/${roundId}/draft`, { answers, checkQuestionIds });
   return res.data.data;
 }
 
-/**
- * ส่งแบบประเมิน — ต้องตอบครบ ส่งแล้วแก้ไม่ได้
- * AI เตือนความเห็นที่ไม่อยู่ใน acknowledged (answerKey ที่กด "ส่งตามนี้") → ยังไม่ส่ง คืน warnings มาแทน
- * (ดูได้จาก submission.status ยังไม่เป็น "submitted")
- */
+// AI เตือนความเห็นที่ไม่อยู่ใน acknowledged → ยังไม่ส่ง (submission.status ไม่เป็น submitted)
 export async function submitEvaluation(roundId: string, answers: EvalAnswer[], acknowledged: string[]) {
   const res = await api.post<ApiResponse<Evaluation>>(`/answers/${roundId}/submit`, { answers, acknowledged });
   return res.data.data;

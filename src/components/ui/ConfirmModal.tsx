@@ -4,7 +4,6 @@ import { Button } from "./Button";
 import { Modal } from "./Modal";
 import { getErrorMessage } from "../../lib/api";
 
-/** ยืนยันก่อนทำสิ่งที่มีผลกับคนอื่น/ย้อนกลับยาก — onConfirm error จะแสดงในกล่องเอง */
 export function ConfirmModal({
   title,
   confirmLabel,

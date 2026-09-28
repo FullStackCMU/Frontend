@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** label + ช่องกรอก + ข้อความช่วย/ข้อผิดพลาด — htmlFor ต้องตรงกับ id ของช่องกรอก */
+// htmlFor ต้องตรงกับ id ของช่องกรอก
 export function Field({
   label,
   htmlFor,

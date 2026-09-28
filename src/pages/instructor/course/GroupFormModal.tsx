@@ -10,7 +10,6 @@ import type { ApiResponse, Group } from "../../../types";
 
 const MAX_GROUP_SIZE = 50;
 
-/** สร้างกลุ่ม (ชื่อ + จำนวนสูงสุด) หรือแก้กลุ่มเดิม (รวมข้อตกลงกลุ่ม) */
 export default function GroupFormModal({
   courseId,
   group,
@@ -18,7 +17,6 @@ export default function GroupFormModal({
   onSaved,
 }: {
   courseId: string;
-  /** ไม่ส่ง = สร้างกลุ่มใหม่ */
   group?: Group;
   onClose: () => void;
   onSaved: (group: Group) => void;

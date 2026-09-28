@@ -1,6 +1,6 @@
 import type { Me } from "../types";
 
-/** ชื่อที่แสดง — ใช้ชื่อไทยก่อน ถ้าไม่มีใช้ชื่ออังกฤษ ถ้าไม่มีทั้งคู่ใช้ CMU account */
+// ต้องตรงกับ displayName ใน Backend/src/lib/course-members.ts
 export function displayName(me: Me) {
   const th = [me.firstnameTh, me.lastnameTh].filter(Boolean).join(" ");
   if (th) return th;
@@ -8,7 +8,6 @@ export function displayName(me: Me) {
   return en || me.cmuAccount;
 }
 
-/** บุคลากร (MISEmpAcc) ใช้หน้าอาจารย์ — ไม่มี role ระดับระบบ สิทธิ์ในวิชามาจาก enrollments */
 export function isStaff(me: Me) {
   return me.accountType === "MISEmpAcc";
 }

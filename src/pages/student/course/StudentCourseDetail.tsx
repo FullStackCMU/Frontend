@@ -19,7 +19,7 @@ type Data = {
   course: Course;
   rounds: CourseRound[];
   group: MyGroup | null;
-  /** โหลดเฉพาะเมื่อยังไม่มีกลุ่ม */
+  // โหลดเฉพาะเมื่อยังไม่มีกลุ่ม
   available: AvailableGroup[];
 };
 
@@ -121,7 +121,7 @@ export default function StudentCourseDetail({ me }: { me: Me }) {
   const { courseId = "" } = useParams();
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState("");
-  // เพิ่มหลังเข้า/ออกกลุ่ม/ยอมรับข้อตกลง → โหลดข้อมูลใหม่
+  // เปลี่ยนค่าเพื่อโหลดข้อมูลใหม่
   const [version, setVersion] = useState(0);
   const reload = () => setVersion((v) => v + 1);
 
@@ -149,7 +149,7 @@ export default function StudentCourseDetail({ me }: { me: Me }) {
   const now = new Date();
   const contractPending = !!group?.contractText && !group.members.find((m) => m.id === me.id)?.contractAcceptedAt;
 
-  // backend ห้ามเปลี่ยนกลุ่มถ้ามี submission ในรอบที่เปิดรับอยู่ — แสดงเหตุผลล่วงหน้า
+  // backend ห้ามเปลี่ยนกลุ่มถ้าเริ่มทำแบบประเมินรอบที่เปิดอยู่ — แสดงเหตุผลล่วงหน้า
   const lockingRound = rounds.find((r) => getRoundStatus(r, now) === "open" && r.mySubmission);
   const lockedReason = lockingRound
     ? `เปลี่ยนกลุ่มได้หลังรอบที่ ${lockingRound.sequenceNo} ปิดรับ (คุณเริ่มทำแบบประเมินแล้ว)`

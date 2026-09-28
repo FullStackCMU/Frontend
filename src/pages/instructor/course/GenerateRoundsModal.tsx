@@ -14,10 +14,6 @@ const INTERVAL_WEEKS = [1, 2, 3, 4, 6, 8];
 const SCALE_MINS = [0, 1];
 const SCALE_MAXES = [3, 4, 5, 6, 7, 8, 9, 10];
 
-/**
- * ตั้งค่ารอบประเมิน: จำนวนรอบ + วันเปิดรอบแรก + ความถี่ + ระยะเปิดรับ + สเกลคะแนน
- * backend สร้างแถว rounds ให้ครบ ต่อเลขรอบจากรอบสุดท้ายที่มีอยู่
- */
 export default function GenerateRoundsModal({
   courseId,
   lastRound,
@@ -54,7 +50,7 @@ export default function GenerateRoundsModal({
     errors.firstOpensAt = `ต้องหลังรอบที่ ${lastRound.sequenceNo} ปิดรับ`;
   const valid = Object.keys(errors).length === 0;
 
-  // ตารางเวลาแบบเดียวกับที่ backend จะสร้าง
+  // ต้องคำนวณแบบเดียวกับ backend
   const startSeq = (lastRound?.sequenceNo ?? 0) + 1;
   const preview =
     valid && first

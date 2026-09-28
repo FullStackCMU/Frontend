@@ -10,7 +10,6 @@ import { formatDateTime } from "../../../lib/date";
 import { answerProgress, estimatedMinutes, toAnswerMap } from "../../../lib/evaluation";
 import type { Course, Evaluation } from "../../../types";
 
-// เพื่อนเห็นความเห็นแบบไม่ระบุชื่อหลังอาจารย์เผยแพร่ผล
 const PRIVACY_TEXT =
   "อาจารย์ผู้สอนเห็นคำตอบทั้งหมด เพื่อนจะเห็นคะแนนเฉลี่ยและความเห็นถึงตัวเองแบบไม่ระบุชื่อ หลังอาจารย์เผยแพร่ผล";
 
@@ -26,7 +25,6 @@ function StatItem({ icon, value, label, valueClass }: { icon: ReactNode; value: 
   );
 }
 
-/** ถ้าส่งแล้วแสดงหน้ายืนยันการส่งแทน */
 export default function RoundLanding({ course, data }: { course: Course; data: Evaluation }) {
   const roundLabel = `รอบที่ ${data.round.sequenceNo}`;
   const courseUrl = `/courses/${course.id}`;

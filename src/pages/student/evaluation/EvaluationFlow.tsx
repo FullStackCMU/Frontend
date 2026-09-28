@@ -6,10 +6,6 @@ import type { ApiResponse, Course, Evaluation } from "../../../types";
 import EvaluationPage from "./EvaluationPage";
 import RoundLanding from "./RoundLanding";
 
-/**
- * /courses/:courseId/rounds/:roundId        → หน้าแรกของรอบ (หรือหน้าส่งแล้ว)
- * /courses/:courseId/rounds/:roundId/evaluate → ทำแบบประเมินทีละคำถาม
- */
 export default function EvaluationFlow() {
   const { courseId = "", roundId = "" } = useParams();
   const [course, setCourse] = useState<Course | null>(null);
@@ -46,7 +42,7 @@ export default function EvaluationFlow() {
       <Route
         path="evaluate"
         element={
-          // ทำต่อไม่ได้ (ส่งแล้ว/ปิดรับ/ยังไม่มีกลุ่ม ฯลฯ) → กลับหน้าแรกของรอบซึ่งบอกเหตุผล
+          // ทำต่อไม่ได้ → กลับหน้าแรกของรอบซึ่งบอกเหตุผล
           data.blocker ? (
             <Navigate to={base} replace />
           ) : (

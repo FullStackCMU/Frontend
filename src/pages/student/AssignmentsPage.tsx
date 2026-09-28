@@ -48,7 +48,6 @@ function TodoCard({ a }: { a: Assignment }) {
   const pct = total === 0 ? 0 : Math.round((answered / total) * 100);
   const courseUrl = `/courses/${a.courseId}`;
 
-  // ต้องทำก่อนประเมิน → พาไปหน้าวิชา (เลือกกลุ่ม / ยอมรับข้อตกลง)
   const blocker = !a.myGroup
     ? { text: "ต้องเลือกกลุ่มก่อนจึงเริ่มประเมินได้", action: "ไปเลือกกลุ่ม" }
     : a.contractPending
@@ -114,7 +113,6 @@ function SubmittedCard({ a }: { a: Assignment }) {
   );
 }
 
-/** รอบที่เปิดรับอยู่จากทุกวิชา ปิดใกล้สุดก่อน */
 export default function AssignmentsPage() {
   const [items, setItems] = useState<Assignment[] | null>(null);
   const [error, setError] = useState("");

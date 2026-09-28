@@ -15,7 +15,6 @@ export interface NavItem {
 export const STUDENT_NAV: NavItem[] = [
   { to: "/assignments", label: "แบบประเมิน", icon: ClipboardList },
   { to: "/courses", label: "วิชาของฉัน", icon: BookOpen },
-  // P1 ไม่มีสรุปจากอาจารย์ — ฟีดแบ็ก = คะแนนเฉลี่ย + ความเห็นจากเพื่อนแบบไม่ระบุชื่อ
   { to: "/feedback", label: "ฟีดแบ็ก", icon: MessageSquare },
 ];
 

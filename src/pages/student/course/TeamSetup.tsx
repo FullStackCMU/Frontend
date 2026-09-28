@@ -9,7 +9,6 @@ import { api, getErrorMessage } from "../../../lib/api";
 import { cn } from "../../../lib/cn";
 import type { AvailableGroup, MyGroup } from "../../../types";
 
-/** ยังไม่มีกลุ่ม → เลือกเข้ากลุ่ม (กลุ่มที่เต็มแล้วเข้าไม่ได้) */
 export function TeamPicker({
   groups,
   onJoined,
@@ -87,7 +86,6 @@ export function TeamPicker({
   );
 }
 
-/** มีกลุ่มแล้วแต่ยังไม่ได้ยอมรับข้อตกลงฉบับปัจจุบัน */
 export function ContractCard({ group, onAccepted }: { group: MyGroup; onAccepted: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -121,7 +119,6 @@ export function ContractCard({ group, onAccepted }: { group: MyGroup; onAccepted
   );
 }
 
-/** เพื่อนร่วมกลุ่ม + ออกจากกลุ่ม (ล็อกระหว่างรอบที่เปิดรับถ้าเริ่มทำแบบประเมินแล้ว) */
 export function TeammatesCard({
   group,
   meId,
@@ -130,7 +127,6 @@ export function TeammatesCard({
 }: {
   group: MyGroup;
   meId: string;
-  /** มีค่า = ออกจากกลุ่มไม่ได้ตอนนี้ */
   lockedReason: string | null;
   onLeft: () => void;
 }) {

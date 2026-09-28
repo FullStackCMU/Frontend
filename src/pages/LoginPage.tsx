@@ -49,7 +49,7 @@ export default function LoginPage() {
 
           <div className="flex w-full flex-col items-center gap-4">
             {error && <Alert className="w-full">{error}</Alert>}
-            {/* <a> ไม่ใช่ <button> — ต้องเปลี่ยนหน้าเต็มเพื่อให้ backend redirect ไป CMU */}
+            {/* <a> ไม่ใช่ <button> — ต้องเปลี่ยนหน้าเต็ม */}
             <a href={LOGIN_URL} className={buttonClass({ size: "lg", fullWidth: true })}>
               <CmuMark />
               เข้าสู่ระบบด้วยบัญชี CMU

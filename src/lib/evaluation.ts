@@ -9,7 +9,6 @@ export const FLAG_LABEL: Record<FlagCategory, string> = {
   other: "อื่นๆ",
 };
 
-/** คำตอบของ (คำถาม, ผู้ถูกประเมิน) — key = `${questionId}:${evaluateeId}` */
 export type AnswerMap = Record<string, { score: number | null; comment: string }>;
 
 export const answerKey = (questionId: string, evaluateeId: string) => `${questionId}:${evaluateeId}`;
@@ -36,7 +35,6 @@ export function isQuestionComplete(data: Evaluation, question: EvalQuestion, map
   return data.targets.every((t) => isAnswered(question, map[answerKey(question.id, t.id)]));
 }
 
-/** จำนวนช่องที่ตอบแล้ว / ทั้งหมด (คำถาม × ผู้ถูกประเมิน) */
 export function answerProgress(data: Evaluation, map: AnswerMap) {
   const total = data.questions.length * data.targets.length;
   const done = data.questions.reduce(
@@ -46,7 +44,6 @@ export function answerProgress(data: Evaluation, map: AnswerMap) {
   return { done, total };
 }
 
-/** เวลาโดยประมาณ (นาที) — ให้คะแนน ~15 วินาที/คน, เขียนความเห็น ~1.5 นาที/คน */
 export function estimatedMinutes(data: Evaluation) {
   const perTarget = data.questions.reduce((m, q) => m + (q.type === "rating" ? 0.25 : 1.5), 0);
   return Math.max(1, Math.ceil(perTarget * data.targets.length));

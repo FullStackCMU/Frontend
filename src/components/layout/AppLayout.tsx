@@ -58,11 +58,6 @@ function Profile({ name, roleLabel, onLogout }: { name: string; roleLabel: strin
   );
 }
 
-/**
- * โครงหน้าหลังล็อกอิน
- * - จอ ≥ 900px: sidebar ซ้ายติดกับที่
- * - จอ < 900px: mobileNav="bottom" → แถบเมนูล่าง (นักศึกษา), "drawer" → ปุ่มเมนู + ลิ้นชัก (อาจารย์)
- */
 export default function AppLayout({
   me,
   nav,
@@ -78,7 +73,7 @@ export default function AppLayout({
 }) {
   const name = displayName(me);
   const { pathname } = useLocation();
-  // จำ path ที่เปิดลิ้นชัก — เปลี่ยนหน้า (รวมกด back) แล้วปิดเองโดยไม่ต้องใช้ effect
+  // ปิดลิ้นชักเมื่อ path เปลี่ยน โดยไม่ใช้ effect
   const [drawerPath, setDrawerPath] = useState<string | null>(null);
   const drawerOpen = drawerPath === pathname;
   const setDrawerOpen = (open: boolean) => setDrawerPath(open ? pathname : null);

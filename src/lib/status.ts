@@ -1,7 +1,6 @@
-/** สถานะรอบ — คำนวณจากวันที่เท่านั้น (ไม่มีคอลัมน์ status ใน DB) */
+// คำนวณจากวันที่ — DB ไม่มีคอลัมน์ status
 export type RoundStatus = "upcoming" | "open" | "closed" | "released";
 
-/** สถานะการส่งแบบประเมินของนักศึกษา 1 คนใน 1 รอบ */
 export type SubmissionStatus = "not_submitted" | "draft" | "submitted";
 
 export type Status = RoundStatus | SubmissionStatus;
@@ -22,9 +21,6 @@ export const TONE_DOT: Record<Tone, string> = {
   success: "bg-emerald-500",
 };
 
-// mapping เดียวใช้ทั้งฝั่งอาจารย์และนักศึกษา
-//   info    = กำลังดำเนินอยู่, warning = รอการกระทำ (รออาจารย์ release / ยังส่งไม่ครบ),
-//   success = เสร็จแล้ว, neutral = ยังไม่เริ่ม
 export const STATUS: Record<Status, { label: string; tone: Tone }> = {
   upcoming: { label: "ยังไม่เปิด", tone: "neutral" },
   open: { label: "เปิดรับ", tone: "info" },
@@ -56,17 +52,13 @@ export function getRoundStatus(
   if (opensAt !== null && t < opensAt) return "upcoming";
   if (closesAt === null || t <= closesAt) return "open";
 
-  // release ได้หลังปิดรับเท่านั้น — ถ้าตั้งเวลา release ไว้ในอนาคตยังนับว่า closed
+  // ตั้งเวลา release ไว้ในอนาคตยังนับว่า closed
   const released = [round.scoresReleasedAt, round.feedbackReleasedAt]
     .map(toTime)
     .some((r) => r !== null && r <= t);
   return released ? "released" : "closed";
 }
 
-/**
- * สถานะรอบในมุมนักศึกษา — ใช้ mapping เดียวกับข้างบน
- * released > ส่งแล้ว (submitted) > ทำค้าง (draft ระหว่างเปิดรับ) > สถานะตามวันที่
- */
 export function getStudentRoundStatus(
   round: Parameters<typeof getRoundStatus>[0] & {
     mySubmission?: { status: "draft" | "submitted" } | null;
@@ -80,7 +72,6 @@ export function getStudentRoundStatus(
   return status;
 }
 
-/** ข้อความสำหรับนักศึกษา (สีเดิม) — "เผยแพร่ผลแล้ว" → "ดูผลได้" */
 export const STUDENT_LABEL: Partial<Record<Status, string>> = {
   closed: "ปิดแล้ว",
   released: "ดูผลได้",

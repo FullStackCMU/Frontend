@@ -1,6 +1,5 @@
 export type AccountType = "StdAcc" | "MISEmpAcc";
 
-/** ผู้ใช้ที่ login อยู่ — ตรงกับ GET /auth/me (แถว users) */
 export interface Me {
   id: string;
   cmuAccount: string;
@@ -15,7 +14,6 @@ export interface Me {
   createdAt: string | null;
 }
 
-/** GET /consents/me, POST /consents */
 export interface ConsentStatus {
   policyVersion: string;
   accepted: boolean;
@@ -24,7 +22,6 @@ export interface ConsentStatus {
 
 export type EnrollmentRole = "instructor" | "student";
 
-/** รอบที่แสดงบนการ์ดวิชา — สถานะคำนวณด้วย getRoundStatus() */
 export interface RoundSummary {
   id: string;
   sequenceNo: number;
@@ -34,49 +31,43 @@ export interface RoundSummary {
   feedbackReleasedAt: string | null;
 }
 
-/** GET /rounds?courseId= */
 export interface CourseRound extends RoundSummary {
   courseId: string;
   scaleMin: number;
   scaleMax: number;
   createdAt: string;
-  /** มีเฉพาะเมื่อผู้เรียกเป็นอาจารย์ — นับเฉพาะคนที่มีกลุ่มอยู่ตอนนี้ */
+  // มีเฉพาะเมื่อผู้เรียกเป็นอาจารย์ — นับเฉพาะคนที่มีกลุ่มอยู่ตอนนี้
   submittedCount?: number;
   studentCount?: number;
-  /** มีเฉพาะเมื่อผู้เรียกเป็นนักศึกษา — null = ยังไม่เริ่มทำ */
+  // มีเฉพาะเมื่อผู้เรียกเป็นนักศึกษา — null = ยังไม่เริ่มทำ
   mySubmission?: { status: "draft" | "submitted"; submittedAt: string | null } | null;
 }
 
-/** GET /courses — วิชาที่ผู้ใช้มี enrollment */
 export interface Course {
   id: string;
   courseCode: string;
   title: string;
   section: string | null;
-  /** 1, 2 หรือ 3 (ฤดูร้อน) */
+  // 3 = ฤดูร้อน
   semester: number;
-  /** ปี พ.ศ. */
+  // พ.ศ.
   academicYear: number;
   createdAt: string;
   role: EnrollmentRole;
-  /** ชื่ออาจารย์ผู้สอน */
   instructors: string[];
-  /** กลุ่มปัจจุบันของผู้ใช้ (นักศึกษา) */
   myGroup: { id: string; name: string } | null;
   roundCount: number;
-  /** รอบที่กำลังเปิดรับตอนนี้ */
   openRoundCount: number;
   studentCount: number;
   currentRound: RoundSummary | null;
 }
 
-/** คนในวิชา (จาก users) — name = ชื่อที่แสดงสำเร็จรูปจาก backend */
 export interface Person {
   id: string;
   studentId: string | null;
   cmuAccount: string;
   name: string;
-  /** null = import แล้วแต่ยังไม่เคยเข้าระบบ */
+  // null = import แล้วแต่ยังไม่เคยเข้าระบบ
   firstLoginAt: string | null;
 }
 
@@ -85,19 +76,17 @@ export interface GroupMember extends Person {
   contractAcceptedAt: string | null;
 }
 
-/** กลุ่ม + สมาชิกปัจจุบัน (left_at เป็น null) */
 export interface Group {
   id: string;
   courseId: string;
   name: string;
-  /** null = ไม่จำกัด */
+  // null = ไม่จำกัด
   maxMembers: number | null;
   contractText: string | null;
   createdAt: string;
   members: GroupMember[];
 }
 
-/** GET /groups/my — มุมมองนักศึกษา (เพื่อนร่วมกลุ่มมีแค่ชื่อ) */
 export interface MyGroup {
   id: string;
   courseId: string;
@@ -107,7 +96,6 @@ export interface MyGroup {
   members: { id: string; name: string; contractAcceptedAt: string | null }[];
 }
 
-/** GET /groups/available — มุมมองนักศึกษา (ไม่มีรหัส/อีเมลของคนอื่น) */
 export interface AvailableGroup {
   id: string;
   name: string;
@@ -116,25 +104,22 @@ export interface AvailableGroup {
   members: { id: string; name: string }[];
 }
 
-/** GET /courses/:courseId/students */
 export interface CourseStudent extends Person {
   group: { id: string; name: string } | null;
 }
 
-/** GET /groups?courseId= */
 export interface GroupsOverview {
   groups: Group[];
   unassigned: Person[];
 }
 
 export interface ImportIssue {
-  /** บรรทัดในไฟล์ CSV (บรรทัดแรกคือหัวตาราง) */
+  // บรรทัดแรกคือหัวตาราง
   line: number;
   reason: string;
   kind: "duplicate" | "invalid";
 }
 
-/** POST /courses/:courseId/students/import */
 export interface ImportResult {
   added: number;
   created: number;
@@ -147,8 +132,6 @@ export interface ApiResponse<T> {
   msg: string;
   data: T;
 }
-
-// ───────────── ทำแบบประเมิน (GET /answers/:roundId) ─────────────
 
 export interface EvalTarget {
   id: string;
@@ -181,21 +164,19 @@ export interface Evaluation {
     scaleMax: number;
   };
   group: { id: string; name: string } | null;
-  /** ตัวเองอยู่ลำดับแรก */
+  // ตัวเองอยู่ลำดับแรก
   targets: EvalTarget[];
   questions: EvalQuestion[];
   submission: { status: "draft" | "submitted"; submittedAt: string | null } | null;
   answers: EvalAnswer[];
-  /** เหตุผลที่ยังบันทึก/ส่งไม่ได้ — null = ทำได้ */
+  // null = บันทึก/ส่งได้
   blocker: string | null;
-  /** คำเตือนจาก AI ของความเห็นที่ตรวจในคำขอนั้น (บันทึกร่างพร้อมตรวจ / กดส่ง) */
   warnings: CommentWarning[];
 }
 
 export type FlagCategory = "profanity" | "personal_attack" | "negative_tone" | "other";
 export type FlagSeverity = "low" | "medium" | "high";
 
-/** AI เตือนความเห็นช่องหนึ่ง — เตือนเฉยๆ นักศึกษาเลือกแก้หรือส่งตามนี้ได้ */
 export interface CommentWarning {
   questionId: string;
   evaluateeId: string;
@@ -204,8 +185,6 @@ export interface CommentWarning {
   suggestion: string;
 }
 
-// ───────────── ผลประเมิน / แบบประเมินรวมทุกวิชา ─────────────
-
 interface CourseRef {
   courseId: string;
   courseCode: string;
@@ -213,7 +192,6 @@ interface CourseRef {
   courseTitle: string;
 }
 
-/** GET /feedback — รอบที่ดูผลได้แล้ว */
 export interface FeedbackListItem extends CourseRef {
   roundId: string;
   sequenceNo: number;
@@ -222,7 +200,6 @@ export interface FeedbackListItem extends CourseRef {
   releasedAt: string;
 }
 
-/** GET /feedback/rounds/:roundId — scores/comments เป็น null ถ้ายังไม่เผยแพร่ */
 export interface RoundFeedback {
   round: {
     id: string;
@@ -237,9 +214,8 @@ export interface RoundFeedback {
   course: { id: string; courseCode: string; section: string | null; title: string };
   groupName: string | null;
   mySubmission: { status: "draft" | "submitted"; submittedAt: string | null } | null;
-  /** จำนวนเพื่อนที่ส่งแบบประเมินให้คุณ */
   peerCount: number;
-  /** มีค่า = เผยแพร่แล้วแต่ไม่แสดงผล เพราะผู้ประเมินน้อยกว่า minPeers คน */
+  // มีค่า = เผยแพร่แล้วแต่ซ่อนผลเพราะผู้ประเมินน้อยกว่า minPeers
   withheldReason: string | null;
   minPeers: number;
   scores:
@@ -255,7 +231,6 @@ export interface RoundFeedback {
   comments: { questionId: string; orderNo: number; prompt: string; comments: string[] }[] | null;
 }
 
-/** GET /rounds/assignments — รอบที่เปิดรับอยู่จากทุกวิชา */
 export interface Assignment extends CourseRef {
   roundId: string;
   sequenceNo: number;
@@ -264,31 +239,26 @@ export interface Assignment extends CourseRef {
   myGroup: { id: string; name: string } | null;
   contractPending: boolean;
   mySubmission: { status: "draft" | "submitted"; submittedAt: string | null } | null;
-  /** ตอบแล้ว / ทั้งหมด (คำถาม × คนในกลุ่ม) */
+  // total = คำถาม × คนในกลุ่ม
   progress: { answered: number; total: number };
 }
-
-// ───────────── แดชบอร์ดอาจารย์ ─────────────
 
 export interface OverviewRow {
   student: { id: string; studentId: string | null; name: string };
   groupId: string | null;
   submission: { status: "draft" | "submitted"; submittedAt: string | null } | null;
-  /** จำนวนเพื่อนที่ส่งแบบประเมินให้คนนี้ (ไม่นับตัวเอง) */
+  // ไม่นับตัวเอง
   peerCount: number;
   scores: { questionId: string; peerAverage: number | null; selfScore: number | null }[];
 }
 
-/** GET /feedback/rounds/:roundId/overview */
 export interface RoundOverview {
   round: RoundSummary & { courseId: string; scaleMin: number; scaleMax: number };
   questions: { id: string; orderNo: number; prompt: string }[];
   groups: { id: string | null; name: string; rows: OverviewRow[] }[];
-  /** นักศึกษาที่มีผู้ประเมินน้อยกว่านี้จะไม่เห็นผลของตัวเอง */
   minPeers: number;
 }
 
-/** GET /feedback/rounds/:roundId/students/:studentId — อาจารย์เห็นชื่อผู้ประเมิน */
 export interface StudentFeedbackDetail {
   student: { id: string; studentId: string | null; name: string; group: { id: string; name: string } | null };
   questions: { id: string; orderNo: number; type: "rating" | "text"; prompt: string }[];
@@ -299,11 +269,9 @@ export interface StudentFeedbackDetail {
       questionId: string;
       score: number | null;
       comment: string | null;
-      /** ผู้เขียนถูก AI เตือนแล้วเลือก "ส่งตามนี้" */
       ignoredWarning: FlagCategory | null;
     }[];
   }[];
-  /** AI เตือนความเห็นที่นักศึกษาคนนี้เขียนในรอบนี้ */
   writtenFlags: {
     total: number;
     edited: number;

@@ -1,4 +1,4 @@
-// code ที่ backend ส่งมากับ /login?error=<code> (ดู Backend/src/routes/auth.ts /callback)
+// ต้องตรงกับ code ใน Backend/src/routes/auth.ts (/callback)
 const LOGIN_ERRORS: Record<string, string> = {
   oauth_error: "การเข้าสู่ระบบถูกยกเลิกหรือไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
   missing_code: "การเข้าสู่ระบบไม่สมบูรณ์ กรุณาลองใหม่อีกครั้ง",

@@ -21,11 +21,10 @@ const SIZE: Record<ButtonSize, string> = {
   sm: "rounded-lg px-3 py-1.5 text-xs",
   md: "rounded-xl px-5 py-2.5 text-sm",
   lg: "rounded-xl px-5 py-3.5 text-base",
-  /** ปุ่มไอคอนสี่เหลี่ยม 48px (ต้องมี aria-label) */
+  // ต้องมี aria-label
   icon: "size-12 shrink-0 rounded-xl",
 };
 
-/** ใช้กับ <a>/<Link> ที่ต้องหน้าตาเหมือนปุ่ม (เช่น ปุ่ม login ที่พาไป /api/auth/login) */
 export function buttonClass({
   variant = "primary",
   size = "md",

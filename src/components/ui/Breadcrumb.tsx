@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 
 interface BreadcrumbSegment {
   label: string;
-  /** path ของ router — ไม่ใส่ = ข้อความเฉยๆ (ตัวสุดท้ายเป็นข้อความเสมอ) */
   to?: string;
 }
 

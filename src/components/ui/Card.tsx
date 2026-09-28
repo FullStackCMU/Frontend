@@ -7,7 +7,6 @@ const PADDING = {
   lg: "px-8 py-10",
 };
 
-/** กล่องพื้นขาวขอบมน — interactive = การ์ดที่คลิกได้ (hover แล้วขอบเป็นสี primary) */
 export function Card({
   padding = "md",
   interactive = false,

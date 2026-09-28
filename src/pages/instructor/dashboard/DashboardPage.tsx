@@ -14,10 +14,7 @@ import type { ApiResponse, Course, CourseRound, OverviewRow, RoundOverview } fro
 import ReleaseControls from "../ReleaseControls";
 import StudentDetailModal from "./StudentDetailModal";
 
-/**
- * self ต่างจาก peer "มาก" = ต่างกัน ≥ 37.5% ของช่วงสเกล (= 1.5 คะแนนบนสเกล 1–5)
- * คิดเป็นสัดส่วนเพราะแต่ละรอบตั้งสเกลต่างกันได้
- */
+// ≥ 37.5% ของช่วงสเกล (1.5 คะแนนบน 1–5) — เป็นสัดส่วนเพราะแต่ละรอบตั้งสเกลต่างกันได้
 const GAP_RATIO = 0.375;
 function isLargeGap(peer: number | null, self: number | null, min: number, max: number) {
   if (peer === null || self === null) return false;
@@ -28,7 +25,6 @@ function submissionStatus(row: OverviewRow): SubmissionStatus {
   return row.submission?.status ?? "not_submitted";
 }
 
-/** รอบเริ่มต้น: รอบปัจจุบันของวิชา (รอบล่าสุดที่เปิดแล้ว) ถ้าไม่มีใช้รอบแรก */
 function defaultRoundId(course: Course | undefined, rounds: CourseRound[]) {
   return course?.currentRound?.id ?? rounds[0]?.id ?? "";
 }
@@ -78,7 +74,7 @@ export default function DashboardPage() {
     setParams({ course: courseId, round: id });
   }
 
-  // release แล้ว endpoint คืนรอบทั้งวิชา → อัปเดตทั้ง rounds และหัวของ overview
+  // ต้องอัปเดตหัวของ overview ด้วย ไม่งั้นสถานะเผยแพร่ไม่ตรง
   function handleReleased(next: CourseRound[]) {
     setRounds(next);
     const updated = next.find((r) => r.id === roundId);

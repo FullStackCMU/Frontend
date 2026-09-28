@@ -3,7 +3,6 @@ import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
@@ -12,11 +11,9 @@ export default defineConfig({
   ],
 
   server: {
-    // OAuth callback ที่ลงทะเบียนไว้คือ http://localhost:5173/api/auth/callback
-    // พอร์ตไม่ว่าง → ให้ error เลย ไม่ย้ายไป 5174 เงียบๆ (login จะพัง)
+    // OAuth callback ลงทะเบียนไว้ที่ :5173 — ห้ามย้ายพอร์ตเอง
     port: 5173,
     strictPort: true,
-    // https://stackoverflow.com/a/74430384
     proxy: {
       "/api": {
         target: "http://localhost:3001",

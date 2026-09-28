@@ -8,7 +8,6 @@ import { api, getErrorMessage } from "../../../lib/api";
 import { fromLocalInput, toLocalInput } from "../../../lib/date";
 import type { ApiResponse, CourseRound } from "../../../types";
 
-/** แก้วันเปิด/ปิดของรอบ — รอบที่เปิดแล้วแก้ได้เฉพาะวันปิด (backend ตรวจการทับซ้อนกับรอบข้างเคียง) */
 export default function EditRoundModal({
   round,
   onClose,
