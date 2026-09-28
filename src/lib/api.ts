@@ -78,8 +78,6 @@ export function getErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const raw =
       err.response?.data?.message ?? err.response?.data?.msg ?? "";
-    if (typeof raw === "string" && raw.includes("duplicate key"))
-      return "คุณได้ประเมินเพื่อนคนนี้ไปแล้วในรอบนี้";
     if (raw) return raw;
     return "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้";
   }
