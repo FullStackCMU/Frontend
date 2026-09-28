@@ -12,13 +12,13 @@ import { cn } from "../../../lib/cn";
 import { formatCourseCode, formatTerm } from "../../../lib/course";
 import { formatDateTime, formatRange } from "../../../lib/date";
 import { getRoundStatus, getStudentRoundStatus, STUDENT_LABEL } from "../../../lib/status";
-import type { ApiResponse, AvailableGroup, Course, CourseRound, Group, Me } from "../../../types";
+import type { ApiResponse, AvailableGroup, Course, CourseRound, Me, MyGroup } from "../../../types";
 import { ContractCard, TeammatesCard, TeamPicker } from "./TeamSetup";
 
 type Data = {
   course: Course;
   rounds: CourseRound[];
-  group: Group | null;
+  group: MyGroup | null;
   /** โหลดเฉพาะเมื่อยังไม่มีกลุ่ม */
   available: AvailableGroup[];
 };
@@ -27,7 +27,7 @@ async function loadData(courseId: string): Promise<Data> {
   const [course, rounds, group] = await Promise.all([
     api.get<ApiResponse<Course>>(`/courses/${courseId}`),
     api.get<ApiResponse<CourseRound[]>>(`/rounds?courseId=${courseId}`),
-    api.get<ApiResponse<Group | null>>(`/groups/my?courseId=${courseId}`),
+    api.get<ApiResponse<MyGroup | null>>(`/groups/my?courseId=${courseId}`),
   ]);
   const available = group.data.data
     ? []

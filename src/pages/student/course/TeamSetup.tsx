@@ -7,7 +7,7 @@ import { Card } from "../../../components/ui/Card";
 import { ConfirmModal } from "../../../components/ui/ConfirmModal";
 import { api, getErrorMessage } from "../../../lib/api";
 import { cn } from "../../../lib/cn";
-import type { AvailableGroup, Group } from "../../../types";
+import type { AvailableGroup, MyGroup } from "../../../types";
 
 /** ยังไม่มีกลุ่ม → เลือกเข้ากลุ่ม (กลุ่มที่เต็มแล้วเข้าไม่ได้) */
 export function TeamPicker({
@@ -88,7 +88,7 @@ export function TeamPicker({
 }
 
 /** มีกลุ่มแล้วแต่ยังไม่ได้ยอมรับข้อตกลงฉบับปัจจุบัน */
-export function ContractCard({ group, onAccepted }: { group: Group; onAccepted: () => void }) {
+export function ContractCard({ group, onAccepted }: { group: MyGroup; onAccepted: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -128,7 +128,7 @@ export function TeammatesCard({
   lockedReason,
   onLeft,
 }: {
-  group: Group;
+  group: MyGroup;
   meId: string;
   /** มีค่า = ออกจากกลุ่มไม่ได้ตอนนี้ */
   lockedReason: string | null;

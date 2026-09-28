@@ -97,6 +97,16 @@ export interface Group {
   members: GroupMember[];
 }
 
+/** GET /groups/my — มุมมองนักศึกษา (เพื่อนร่วมกลุ่มมีแค่ชื่อ) */
+export interface MyGroup {
+  id: string;
+  courseId: string;
+  name: string;
+  maxMembers: number | null;
+  contractText: string | null;
+  members: { id: string; name: string; contractAcceptedAt: string | null }[];
+}
+
 /** GET /groups/available — มุมมองนักศึกษา (ไม่มีรหัส/อีเมลของคนอื่น) */
 export interface AvailableGroup {
   id: string;
@@ -140,7 +150,9 @@ export interface ApiResponse<T> {
 
 // ───────────── ทำแบบประเมิน (GET /answers/:roundId) ─────────────
 
-export interface EvalTarget extends Person {
+export interface EvalTarget {
+  id: string;
+  name: string;
   isSelf: boolean;
 }
 
