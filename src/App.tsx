@@ -1,52 +1,175 @@
-import { useEffect, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
-import { tokenStore, userStore, UNAUTHORIZED_EVENT } from "./lib/api";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { fetchConsent, fetchMe, logout, UNAUTHORIZED_EVENT } from "./lib/api";
+import { isStaff } from "./lib/user";
+import { Button } from "./components/ui/Button";
+import { LogoMark } from "./components/ui/Brand";
+import AppLayout from "./components/layout/AppLayout";
+import { STAFF_NAV, STUDENT_NAV } from "./components/layout/nav";
 import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import StudentDashboard from "./pages/StudentDashboard";
-import InstructorDashboard from "./pages/InstructorDashboard";
-import type { User } from "./types";
+import ConsentPage from "./pages/ConsentPage";
+import AssignmentsPage from "./pages/student/AssignmentsPage";
+import MyCoursesPage from "./pages/student/MyCoursesPage";
+import StudentCourseDetail from "./pages/student/course/StudentCourseDetail";
+import EvaluationFlow from "./pages/student/evaluation/EvaluationFlow";
+import FeedbackListPage from "./pages/student/feedback/FeedbackListPage";
+import FeedbackPage from "./pages/student/feedback/FeedbackPage";
+import CourseDashboard from "./pages/instructor/CourseDashboard";
+import CourseDetail from "./pages/instructor/course/CourseDetail";
+import DashboardPage from "./pages/instructor/dashboard/DashboardPage";
+import type { ConsentStatus, Me } from "./types";
+
+const UiPreview = import.meta.env.DEV
+  ? lazy(() => import("./pages/dev/UiPreview"))
+  : null;
+
+type Session =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "anonymous" }
+  // consent = null → ไม่ต้องขอ (บุคลากร — consent ครอบคลุมข้อความที่นักศึกษาเขียนเท่านั้น)
+  | { status: "authenticated"; me: Me; consent: ConsentStatus | null };
+
+// cookie เป็น httpOnly อ่านจาก JS ไม่ได้ ต้องถาม backend
+async function loadSession(): Promise<Session> {
+  const me = await fetchMe();
+  if (!me) return { status: "anonymous" };
+  const consent = isStaff(me) ? null : await fetchConsent();
+  return { status: "authenticated", me, consent };
+}
+
+function FullScreen({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-5 text-center">
+      {children}
+    </div>
+  );
+}
 
 function App() {
-  const [user, setUser] = useState<User | null>(() => userStore.get());
+  const [session, setSession] = useState<Session>({ status: "loading" });
+  const location = useLocation();
 
-  function handleLogout() {
-    tokenStore.clear();
-    setUser(null);
-  }
+  useEffect(() => {
+    let cancelled = false;
+    loadSession()
+      .then((s) => !cancelled && setSession(s))
+      .catch(() => !cancelled && setSession({ status: "error" }));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     function onUnauthorized() {
-      setUser(null);
+      setSession({ status: "anonymous" });
     }
     window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
   }, []);
 
-  // ยังไม่ล็อกอิน → หน้า login อยู่ที่ /login (path อื่นเด้งมา /login)
-  if (!user) {
+  // oauth497 ยังจำ session — login ใหม่จะได้บัญชีเดิม (ไม่รองรับ end-session)
+  async function handleLogout() {
+    await logout().catch(() => {});
+    setSession({ status: "anonymous" });
+  }
+
+  if (UiPreview && location.pathname === "/dev/ui") {
+    return (
+      <Suspense>
+        <UiPreview />
+      </Suspense>
+    );
+  }
+
+  if (session.status === "loading") {
+    return (
+      <FullScreen>
+        <span className="animate-pulse">
+          <LogoMark size="lg" />
+        </span>
+        <p className="text-sm text-muted-foreground">กำลังโหลด...</p>
+      </FullScreen>
+    );
+  }
+
+  if (session.status === "error") {
+    return (
+      <FullScreen>
+        <p className="text-sm text-muted-foreground">เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่อีกครั้ง</p>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          ลองใหม่
+        </Button>
+      </FullScreen>
+    );
+  }
+
+  if (session.status === "anonymous") {
     return (
       <Routes>
-        <Route path="/login" element={<LoginPage onSuccess={setUser} />} />
-        <Route path="/register" element={<RegisterPage onSuccess={setUser} />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }
 
-  // ล็อกอินแล้ว → dashboard ตาม role (ภายในยังใช้ state nav เดิม — จะแตกเป็น route ในเฟสถัดไป)
-  const dashboard =
-    user.role === "instructor" ? (
-      <InstructorDashboard user={user} onLogout={handleLogout} />
-    ) : (
-      <StudentDashboard user={user} onLogout={handleLogout} />
+  const { me, consent } = session;
+  if (consent && !consent.accepted) {
+    return (
+      <Routes>
+        <Route
+          path="/consent"
+          element={
+            <ConsentPage
+              onAccepted={(accepted) => setSession({ ...session, consent: accepted })}
+              onDecline={handleLogout}
+            />
+          }
+        />
+        <Route path="*" element={<Navigate to="/consent" replace />} />
+      </Routes>
     );
+  }
+
+  const staff = isStaff(me);
 
   return (
     <Routes>
       <Route path="/login" element={<Navigate to="/" replace />} />
-      <Route path="/register" element={<Navigate to="/" replace />} />
-      <Route path="/*" element={dashboard} />
+      <Route path="/consent" element={<Navigate to="/" replace />} />
+
+      <Route
+        element={
+          <AppLayout
+            me={me}
+            nav={staff ? STAFF_NAV : STUDENT_NAV}
+            mobileNav={staff ? "drawer" : "bottom"}
+            roleLabel={staff ? "อาจารย์" : "นักศึกษา"}
+            onLogout={handleLogout}
+          />
+        }
+      >
+        {staff ? (
+          <>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/courses" element={<CourseDashboard />} />
+            <Route path="/courses/:courseId/*" element={<CourseDetail />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </>
+        ) : (
+          <>
+            <Route index element={<Navigate to="/assignments" replace />} />
+            <Route path="/assignments" element={<AssignmentsPage />} />
+            <Route path="/courses" element={<MyCoursesPage />} />
+            <Route path="/courses/:courseId" element={<StudentCourseDetail me={me} />} />
+            <Route path="/courses/:courseId/rounds/:roundId/*" element={<EvaluationFlow />} />
+            <Route path="/feedback" element={<FeedbackListPage />} />
+            <Route path="/feedback/:roundId" element={<FeedbackPage />} />
+            <Route path="*" element={<Navigate to="/assignments" replace />} />
+          </>
+        )}
+      </Route>
     </Routes>
   );
 }

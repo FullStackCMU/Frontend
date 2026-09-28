@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+
+  --color-ramp-1: var(--ramp-1);
+  --color-ramp-2: var(--ramp-2);
+  --color-ramp-3: var(--ramp-3);
+  --color-ramp-4: var(--ramp-4);
+  --color-ramp-5: var(--ramp-5);
+
+  /* ไม่ override radius — ใช้ค่า default ของ Tailwind */
+
+  --font-sans: var(--font-body);
+}
+
+:root {
+  --background: #f7f7f8;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --primary: #4338ca;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2ff;
+  --secondary-foreground: #3730a3;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --border: #e4e4e7;
+  --ring: #6366f1;
+
+  --font-body: "Sarabun", system-ui, sans-serif;
+
+  /* แถบ sticky ด้านล่างของหน้าต้องเว้นระยะนี้ */
+  --bottom-nav-h: calc(3.75rem + env(safe-area-inset-bottom));
+
+  --ramp-1: #c7d2fe;
+  --ramp-2: #a5b4fc;
+  --ramp-3: #818cf8;
+  --ramp-4: #6366f1;
+  --ramp-5: #4338ca;
+}
+
+@layer base {
+  :root {
+    line-height: 1.5;
+    font-family: var(--font-body);
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
