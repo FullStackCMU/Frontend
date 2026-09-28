@@ -25,7 +25,7 @@ function ReleasedChip({ label, on }: { label: string; on: boolean }) {
   );
 }
 
-/** "ฟีดแบ็ก" — รอบที่ดูผลได้แล้วจากทุกวิชา (FeedbackListScreen) */
+/** รอบที่ดูผลได้แล้วจากทุกวิชา */
 export default function FeedbackListPage() {
   const [items, setItems] = useState<FeedbackListItem[] | null>(null);
   const [error, setError] = useState("");

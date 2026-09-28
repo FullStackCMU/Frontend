@@ -10,7 +10,6 @@ import { STATUS, getRoundStatus, type Status } from "../../lib/status";
 const DAY = 24 * 60 * 60 * 1000;
 const at = (days: number) => new Date(Date.now() + days * DAY).toISOString();
 
-// ตัวอย่างการคำนวณสถานะรอบจากวันที่
 const ROUND_SAMPLES = [
   { label: "เปิดพรุ่งนี้", opensAt: at(1), closesAt: at(8) },
   { label: "เปิดเมื่อวาน ปิดอีก 6 วัน", opensAt: at(-1), closesAt: at(6) },

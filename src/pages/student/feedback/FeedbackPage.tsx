@@ -11,7 +11,7 @@ import { formatCourseCode } from "../../../lib/course";
 import { formatDateTime } from "../../../lib/date";
 import type { ApiResponse, FeedbackListItem, RoundFeedback } from "../../../types";
 
-// ไล่เฉด indigo สีเดียว (ไม่ใช้แดง) — design-ref
+// ไล่เฉด indigo สีเดียว ไม่ใช้แดง
 const RAMP = ["bg-ramp-1", "bg-ramp-2", "bg-ramp-3", "bg-ramp-4", "bg-ramp-5"];
 
 function Section({ title, icon, children }: { title: string; icon?: ReactNode; children: ReactNode }) {
@@ -138,7 +138,7 @@ function Pending({ data }: { data: RoundFeedback }) {
   );
 }
 
-/** ผลประเมินของรอบ (FeedbackScreen) — แสดงเฉพาะส่วนที่อาจารย์เผยแพร่แล้ว (backend ตัดส่วนที่ยังไม่เผยแพร่ออก) */
+/** backend ตัดส่วนที่ยังไม่เผยแพร่ออกให้แล้ว */
 export default function FeedbackPage() {
   const { roundId = "" } = useParams();
   const [data, setData] = useState<RoundFeedback | null>(null);

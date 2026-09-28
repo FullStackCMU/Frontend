@@ -34,15 +34,14 @@ export interface RoundSummary {
   feedbackReleasedAt: string | null;
 }
 
-/** GET /rounds?courseId= — progress มีเฉพาะเมื่อผู้เรียกเป็นอาจารย์ของวิชา */
+/** GET /rounds?courseId= */
 export interface CourseRound extends RoundSummary {
   courseId: string;
   scaleMin: number;
   scaleMax: number;
   createdAt: string;
-  /** จำนวนนักศึกษาที่ส่งแบบประเมินแล้ว (submissions.status = submitted) */
+  /** มีเฉพาะเมื่อผู้เรียกเป็นอาจารย์ — นับเฉพาะคนที่มีกลุ่มอยู่ตอนนี้ */
   submittedCount?: number;
-  /** นักศึกษาที่มีกลุ่มอยู่ตอนนี้ */
   studentCount?: number;
   /** มีเฉพาะเมื่อผู้เรียกเป็นนักศึกษา — null = ยังไม่เริ่มทำ */
   mySubmission?: { status: "draft" | "submitted"; submittedAt: string | null } | null;

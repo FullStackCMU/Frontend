@@ -114,7 +114,7 @@ function SubmittedCard({ a }: { a: Assignment }) {
   );
 }
 
-/** "แบบประเมิน" — รอบที่เปิดรับอยู่จากทุกวิชา (AssignmentsScreen) ปิดใกล้สุดก่อน */
+/** รอบที่เปิดรับอยู่จากทุกวิชา ปิดใกล้สุดก่อน */
 export default function AssignmentsPage() {
   const [items, setItems] = useState<Assignment[] | null>(null);
   const [error, setError] = useState("");

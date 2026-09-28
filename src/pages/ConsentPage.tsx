@@ -26,7 +26,6 @@ const ICONS: Record<ConsentIcon, LucideIcon> = {
   shield: ShieldCheck,
 };
 
-/** โลโก้กล่องข้อความ 2 อันบนพื้นเข้ม (ใช้เฉพาะหน้านี้ตาม design-ref) */
 function ConsentLogo({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true">
@@ -63,7 +62,6 @@ export default function ConsentPage({
 
   return (
     <div className="flex min-h-screen flex-col min-[900px]:flex-row">
-      {/* แผงซ้าย — มือถือเหลือแถบโลโก้ */}
       <div className="relative flex w-full shrink-0 flex-col overflow-hidden bg-[#4A5B8C] min-[900px]:w-[40%] min-[900px]:min-w-[420px]">
         <div className="flex items-center gap-3 px-6 py-4 min-[900px]:hidden">
           <ConsentLogo size={28} />
@@ -102,7 +100,6 @@ export default function ConsentPage({
         </div>
       </div>
 
-      {/* แผงขวา */}
       <div className="flex flex-1 flex-col justify-center overflow-y-auto bg-card">
         <div className="mx-auto w-full max-w-[520px] px-6 py-10 sm:px-16">
           <p className="mb-1.5 text-xs text-muted-foreground">ขั้นตอนที่ 2 จาก 2</p>

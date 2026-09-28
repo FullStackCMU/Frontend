@@ -74,7 +74,7 @@ function Profile({ name, roleLabel, onLogout }: { name: string; roleLabel: strin
 }
 
 /**
- * โครงหน้าหลังล็อกอิน (ตาม StudentLayout/InstructorLayout ใน design-ref)
+ * โครงหน้าหลังล็อกอิน
  * - จอ ≥ 900px: sidebar ซ้ายติดกับที่
  * - จอ < 900px: mobileNav="bottom" → แถบเมนูล่าง (นักศึกษา), "drawer" → ปุ่มเมนู + ลิ้นชัก (อาจารย์)
  */
@@ -107,7 +107,6 @@ export default function AppLayout({
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar — desktop */}
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col overflow-y-auto border-r border-border bg-card min-[900px]:flex">
         <div className="border-b border-border px-5 pt-6 pb-5">
           <Brand />
@@ -120,7 +119,6 @@ export default function AppLayout({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top bar — mobile */}
         <header className="sticky top-0 z-30 flex h-12 shrink-0 items-center gap-3 border-b border-border bg-card px-4 min-[900px]:hidden">
           {mobileNav === "drawer" && (
             <button
@@ -152,7 +150,6 @@ export default function AppLayout({
           )}
         </header>
 
-        {/* Drawer — mobile (อาจารย์) */}
         {mobileNav === "drawer" && drawerOpen && (
           <>
             <div
@@ -175,7 +172,6 @@ export default function AppLayout({
         </main>
       </div>
 
-      {/* Bottom nav — mobile (นักศึกษา) */}
       {mobileNav === "bottom" && (
         <nav
           aria-label="เมนูหลัก"

@@ -32,7 +32,6 @@ export function isAnswered(question: EvalQuestion, answer: AnswerMap[string] | u
   return question.type === "rating" ? answer.score !== null : answer.comment.trim() !== "";
 }
 
-/** ตอบครบทุกคนในคำถามนี้หรือยัง */
 export function isQuestionComplete(data: Evaluation, question: EvalQuestion, map: AnswerMap) {
   return data.targets.every((t) => isAnswered(question, map[answerKey(question.id, t.id)]));
 }

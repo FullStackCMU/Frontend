@@ -105,7 +105,6 @@ function RoundCard({
   );
 }
 
-/** แท็บรอบประเมินใน CourseDetail — ตั้งค่ารอบ แก้วัน ลบ และเผยแพร่ผล */
 export default function RoundsTab({ courseId }: { courseId: string }) {
   const [rounds, setRounds] = useState<CourseRound[] | null>(null);
   const [error, setError] = useState("");

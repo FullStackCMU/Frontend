@@ -29,7 +29,6 @@
   --font-sans: var(--font-body);
 }
 
-/* โทเคนจาก design-ref (indigo + Sarabun) */
 :root {
   --background: #f7f7f8;
   --foreground: #18181b;

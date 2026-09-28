@@ -1,6 +1,5 @@
 import { cn } from "../../lib/cn";
 
-/** โลโก้วงกลม 3 วง */
 export function LogoMark({ size = "sm" }: { size?: "sm" | "lg" }) {
   const lg = size === "lg";
   return (
@@ -25,7 +24,6 @@ export function LogoMark({ size = "sm" }: { size?: "sm" | "lg" }) {
   );
 }
 
-/** โลโก้ + ชื่อระบบ (ใช้บน sidebar / top bar) */
 export function Brand() {
   return (
     <span className="flex items-center gap-2.5">

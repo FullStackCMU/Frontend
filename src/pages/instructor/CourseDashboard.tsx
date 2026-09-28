@@ -49,7 +49,6 @@ function CourseCard({ course }: { course: Course }) {
   );
 }
 
-/** หน้า "คอร์สของฉัน" ของอาจารย์ (CourseDashboard ใน design-ref) */
 export default function CourseDashboard() {
   const [courses, setCourses] = useState<Course[] | null>(null);
   const [error, setError] = useState("");

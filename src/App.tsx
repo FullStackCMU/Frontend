@@ -72,7 +72,7 @@ function App() {
 
   // ลบ session ของระบบแล้วกลับหน้า login (route ของ anonymous พาไป /login เอง)
   // request ล้มเหลวก็ยังถือว่า logout ฝั่งหน้าเว็บ
-  // หมายเหตุ: session ที่ oauth497 ยังอยู่ — login ใหม่จะได้บัญชีเดิม (end-session / prompt=login ใช้ไม่ได้)
+  // session ที่ oauth497 ยังอยู่ — login ใหม่จะได้บัญชีเดิม (oauth497 ไม่รองรับ end-session / prompt=login)
   async function handleLogout() {
     await logout().catch(() => {});
     setSession({ status: "anonymous" });

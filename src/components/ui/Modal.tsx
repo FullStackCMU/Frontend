@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
 
 /**
- * กล่อง modal ตาม design-ref — ใช้ <dialog> ของ browser (showModal)
+ * ใช้ <dialog> ของ browser (showModal)
  * จึงได้ focus trap, กด Esc ปิด, และ inert เนื้อหาด้านหลังมาเอง
  * render เมื่อต้องการเปิด แล้ว unmount เมื่อปิด (ไม่มี prop open)
  * ช่องที่ต้องการ focus ตอนเปิด ใส่ data-autofocus (ไม่ใช่ autoFocus)

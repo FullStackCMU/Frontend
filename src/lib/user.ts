@@ -8,7 +8,7 @@ export function displayName(me: Me) {
   return en || me.cmuAccount;
 }
 
-/** บุคลากร (MISEmpAcc) ใช้หน้าอาจารย์ — schema ใหม่ไม่มี role ระดับระบบแล้ว */
+/** บุคลากร (MISEmpAcc) ใช้หน้าอาจารย์ — ไม่มี role ระดับระบบ สิทธิ์ในวิชามาจาก enrollments */
 export function isStaff(me: Me) {
   return me.accountType === "MISEmpAcc";
 }

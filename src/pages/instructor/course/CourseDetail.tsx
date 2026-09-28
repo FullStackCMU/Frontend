@@ -13,7 +13,6 @@ import RoundsTab from "./RoundsTab";
 import UploadStudentsModal from "./UploadStudentsModal";
 
 /**
- * หน้ารายละเอียดวิชาของอาจารย์ (CourseDetail ใน design-ref)
  * /courses/:courseId → นักศึกษา, /groups → กลุ่ม, /rounds → รอบประเมิน
  */
 export default function CourseDetail() {

@@ -117,7 +117,6 @@ function InfoCard({ title, rows }: { title: string; rows: { label: string; value
   );
 }
 
-/** หน้าวิชาของนักศึกษา (StudentCourseDetailScreen ใน design-ref) + ตั้งค่าทีม */
 export default function StudentCourseDetail({ me }: { me: Me }) {
   const { courseId = "" } = useParams();
   const [data, setData] = useState<Data | null>(null);
@@ -192,7 +191,6 @@ export default function StudentCourseDetail({ me }: { me: Me }) {
 
       <div className="flex flex-col items-stretch gap-8 min-[1200px]:flex-row min-[1200px]:items-start">
         <div className="flex min-w-0 flex-1 flex-col gap-5 min-[1200px]:max-w-[760px] min-[1200px]:min-w-[480px]">
-          {/* ต้องทำก่อนประเมิน: เลือกกลุ่ม / ยอมรับข้อตกลง */}
           {!group && <TeamPicker groups={available} onJoined={reload} />}
           {group && contractPending && <ContractCard group={group} onAccepted={reload} />}
 

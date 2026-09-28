@@ -208,7 +208,7 @@ function TextCard({
 const DECIDE_NOTICE = "มีความเห็นที่ AI แนะนำให้ทบทวน — เลือก “แก้ข้อความ” หรือ “ส่งตามนี้” ก่อนไปต่อ";
 
 /**
- * ทำแบบประเมินทีละคำถาม (EvaluationScreen) — บันทึกร่างทุกครั้งที่เปลี่ยนคำถาม
+ * บันทึกร่างทุกครั้งที่เปลี่ยนคำถาม
  *
  * AI ตรวจความเห็น (เตือน ไม่บล็อก): ตอนกด "ถัดไป" จากคำถาม text (เฉพาะข้อความที่เปลี่ยนจากที่ตรวจล่าสุด)
  * และตอนกดส่ง (backend ตรวจทุกข้อความ ข้อความที่เคยตรวจแล้วได้ผลจาก cache)
@@ -339,7 +339,6 @@ export default function EvaluationPage({
   }
 
   async function goTo(i: number) {
-    // ไปข้างหน้าจากคำถาม text → ตรวจข้อความก่อน
     const checkId = i > index && question.type === "text" ? question.id : undefined;
     const latest = await save(checkId);
     if (!latest) return;
@@ -522,7 +521,6 @@ export default function EvaluationPage({
         </div>
       </div>
 
-      {/* รายการคำถาม — จอกว้างเท่านั้น */}
       <aside className="sticky top-0 hidden w-[280px] shrink-0 self-start border-l border-border px-5 py-6 min-[1100px]:block">
         <p className="mb-4 text-[10px] font-bold tracking-widest text-muted-foreground uppercase">คำถาม</p>
         <ol className="mb-6 flex flex-col gap-1">

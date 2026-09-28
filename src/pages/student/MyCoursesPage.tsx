@@ -50,7 +50,6 @@ function CourseCard({ course }: { course: Course }) {
   );
 }
 
-/** "วิชาของฉัน" ของนักศึกษา (MyCoursesScreen ใน design-ref) */
 export default function MyCoursesPage() {
   const [courses, setCourses] = useState<Course[] | null>(null);
   const [error, setError] = useState("");
