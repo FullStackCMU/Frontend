@@ -2,8 +2,8 @@
 
 ## Setup
 
-- Use branch `full-frontend` (not `pf-frontend`)
-- Make sure that you already have Backend running from `Backend` project (branch `full-backend`) on port 3001
+- Use branch `full-frontend` or `main` (not `pf-frontend`)
+- Make sure that you already have Backend running from `Backend` project (branch `full-backend` or `main`) on port 3001
 - `pnpm install`
 - `pnpm run dev` (must run on port 5173 only, for the OAuth callback)
 - Log in as instructor `wichai.t@cmu.ac.th`, or as a student with your own CMU account
