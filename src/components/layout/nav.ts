@@ -10,8 +10,6 @@ export interface NavItem {
   to: string;
   label: string;
   icon: LucideIcon;
-  /** ตัวเลขบน badge — ยังไม่มี API นับ (รอบที่เปิด/ฟีดแบ็กใหม่) จึงยังไม่มีใครส่งมา */
-  badge?: number;
 }
 
 export const STUDENT_NAV: NavItem[] = [

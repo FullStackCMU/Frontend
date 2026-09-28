@@ -8,24 +8,10 @@ import { displayName } from "../../lib/user";
 import type { Me } from "../../types";
 import type { NavItem } from "./nav";
 
-function Badge({ count, className }: { count?: number; className?: string }) {
-  if (!count) return null;
-  return (
-    <span
-      className={cn(
-        "flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold text-white",
-        className
-      )}
-    >
-      {count}
-    </span>
-  );
-}
-
 function SidebarNav({ nav, onNavigate }: { nav: NavItem[]; onNavigate?: () => void }) {
   return (
     <nav aria-label="เมนูหลัก" className="flex flex-1 flex-col gap-0.5 px-3 py-4">
-      {nav.map(({ to, label, icon: Icon, badge }) => (
+      {nav.map(({ to, label, icon: Icon }) => (
         <NavLink
           key={to}
           to={to}
@@ -41,7 +27,6 @@ function SidebarNav({ nav, onNavigate }: { nav: NavItem[]; onNavigate?: () => vo
         >
           <Icon size={16} className="shrink-0" />
           <span className="flex-1 truncate">{label}</span>
-          <Badge count={badge} />
         </NavLink>
       ))}
     </nav>
@@ -177,7 +162,7 @@ export default function AppLayout({
           aria-label="เมนูหลัก"
           className="fixed right-0 bottom-0 left-0 z-40 flex h-(--bottom-nav-h) items-stretch border-t border-border bg-card pb-[env(safe-area-inset-bottom)] min-[900px]:hidden"
         >
-          {nav.map(({ to, label, icon: Icon, badge }) => (
+          {nav.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -188,9 +173,8 @@ export default function AppLayout({
                 )
               }
             >
-              <span className="relative">
+              <span>
                 <Icon size={20} />
-                <Badge count={badge} className="absolute -top-1.5 -right-2 h-4 min-w-4 text-[9px]" />
               </span>
               <span className="max-w-16 truncate text-center text-[10px] leading-tight font-medium">
                 {label}
