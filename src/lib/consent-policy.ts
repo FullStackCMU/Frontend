@@ -1,9 +1,7 @@
 // เนื้อหานโยบายที่แสดงในหน้า Consent
 // แก้เนื้อหาเมื่อไหร่ ต้องเปลี่ยน version ทั้งที่นี่และ Backend/src/config.ts (CONSENT_POLICY_VERSION)
 // ถ้าไม่ตรงกัน POST /consents จะตอบ 409 — กันไม่ให้ผู้ใช้ยอมรับข้อความที่ไม่ใช่ฉบับปัจจุบัน
-//
-// TODO ยืนยันก่อนใช้งานจริง: ระยะเวลาเก็บข้อมูล, ช่องทางถอนความยินยอม/ขอลบข้อมูล
-export const CONSENT_POLICY_VERSION = "2026-09-v3";
+export const CONSENT_POLICY_VERSION = "2026-09-v4";
 
 export const CONSENT_ROWS = [
   {
@@ -28,12 +26,12 @@ export const CONSENT_ROWS = [
   {
     icon: "clock",
     label: "เก็บนานแค่ไหน",
-    detail: "ตลอดภาคการศึกษา และลบภายใน 1 ปีหลังจบคอร์ส",
+    detail: "ลบเมื่อสิ้นสุดภาคการศึกษา",
   },
   {
     icon: "shield",
     label: "สิทธิ์ของคุณ",
-    detail: "ขอถอนความยินยอมหรือขอลบข้อมูลได้ โดยติดต่ออาจารย์ผู้สอน",
+    detail: "ขอถอนความยินยอมหรือขอลบข้อมูลได้ โดยติดต่ออาจารย์ผู้สอนประจำวิชา",
   },
 ] as const;
 
