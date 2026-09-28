@@ -14,7 +14,7 @@ export async function readCsvFile(file: File) {
 }
 
 /** แยก CSV ตาม RFC 4180 (รองรับ "..." ที่มี , หรือขึ้นบรรทัดใหม่ และ "" = ") — ข้ามบรรทัดว่าง */
-export function parseCsv(text: string): string[][] {
+function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";

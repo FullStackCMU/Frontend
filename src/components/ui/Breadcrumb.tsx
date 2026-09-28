@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export interface BreadcrumbSegment {
+interface BreadcrumbSegment {
   label: string;
   /** path ของ router — ไม่ใส่ = ข้อความเฉยๆ (ตัวสุดท้ายเป็นข้อความเสมอ) */
   to?: string;

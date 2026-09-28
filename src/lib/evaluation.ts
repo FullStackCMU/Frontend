@@ -27,7 +27,7 @@ export function toAnswerList(map: AnswerMap): EvalAnswer[] {
   });
 }
 
-export function isAnswered(question: EvalQuestion, answer: AnswerMap[string] | undefined) {
+function isAnswered(question: EvalQuestion, answer: AnswerMap[string] | undefined) {
   if (!answer) return false;
   return question.type === "rating" ? answer.score !== null : answer.comment.trim() !== "";
 }
