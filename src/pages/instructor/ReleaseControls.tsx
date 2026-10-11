@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Check } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { ConfirmModal } from "../../components/ui/ConfirmModal";
-import { api } from "../../lib/api";
+import { useReleaseRound } from "../../hooks/useRounds";
 import { formatDateTime } from "../../lib/date";
-import type { ApiResponse, CourseRound, RoundSummary } from "../../types";
+import type { CourseRound } from "../../types";
 
 type ReleaseKind = "scores" | "feedback";
 
@@ -22,22 +22,14 @@ const RELEASE_TEXT: Record<ReleaseKind, { label: string; released: string; effec
 };
 
 // ใช้ได้เฉพาะรอบที่ปิดรับแล้ว — ผู้เรียกต้องเช็คก่อนแสดง
-export default function ReleaseControls({
-  round,
-  onUpdated,
-}: {
-  round: RoundSummary;
-  onUpdated: (rounds: CourseRound[]) => void;
-}) {
+export default function ReleaseControls({ round }: { round: CourseRound }) {
   const [pending, setPending] = useState<{ what: ReleaseKind; release: boolean } | null>(null);
+  const release = useReleaseRound(round);
 
   async function confirm() {
     if (!pending) return;
-    const res = await api.patch<ApiResponse<CourseRound[]>>(`/rounds/${round.id}/release`, {
-      [pending.what]: pending.release,
-    });
+    await release.mutateAsync({ [pending.what]: pending.release });
     setPending(null);
-    onUpdated(res.data.data);
   }
 
   return (

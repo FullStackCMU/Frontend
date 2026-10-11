@@ -5,7 +5,7 @@ import { Avatar } from "../ui/Avatar";
 import { Brand } from "../ui/Brand";
 import { cn } from "../../lib/cn";
 import { displayName } from "../../lib/user";
-import type { Me } from "../../types";
+import { useMe, useSessionStore } from "../../stores/useSessionStore";
 import type { NavItem } from "./nav";
 
 function SidebarNav({ nav, onNavigate }: { nav: NavItem[]; onNavigate?: () => void }) {
@@ -59,19 +59,16 @@ function Profile({ name, roleLabel, onLogout }: { name: string; roleLabel: strin
 }
 
 export default function AppLayout({
-  me,
   nav,
   mobileNav,
   roleLabel,
-  onLogout,
 }: {
-  me: Me;
   nav: NavItem[];
   mobileNav: "bottom" | "drawer";
   roleLabel: string;
-  onLogout: () => void;
 }) {
-  const name = displayName(me);
+  const name = displayName(useMe());
+  const onLogout = useSessionStore((s) => s.logout);
   const { pathname } = useLocation();
   // ปิดลิ้นชักเมื่อ path เปลี่ยน โดยไม่ใช้ effect
   const [drawerPath, setDrawerPath] = useState<string | null>(null);

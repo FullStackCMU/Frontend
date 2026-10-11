@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Search, Upload } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Button } from "../../../components/ui/Button";
 import { inputClass } from "../../../components/ui/field-styles";
-import { api, getErrorMessage } from "../../../lib/api";
+import { useCourseStudents } from "../../../hooks/useCourseMembers";
+import { getErrorMessage } from "../../../lib/api";
 import { cn } from "../../../lib/cn";
-import type { ApiResponse, CourseStudent } from "../../../types";
+import type { CourseStudent } from "../../../types";
 
 export const TEMPLATE_CSV_URL = "/students-template.csv";
 
@@ -27,20 +28,12 @@ export default function StudentsTab({
   courseId: string;
   onUpload: () => void;
 }) {
-  const [students, setStudents] = useState<CourseStudent[] | null>(null);
-  const [error, setError] = useState("");
+  const { data: students, error } = useCourseStudents(courseId);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    api
-      .get<ApiResponse<CourseStudent[]>>(`/courses/${courseId}/students`)
-      .then((res) => setStudents(res.data.data))
-      .catch((err) => setError(getErrorMessage(err)));
-  }, [courseId]);
-
-  if (error) return <Alert>{error}</Alert>;
+  if (error) return <Alert>{getErrorMessage(error)}</Alert>;
 
   if (!students)
     return (

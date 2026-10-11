@@ -1,30 +1,24 @@
-import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { Alert } from "../../../components/ui/Alert";
-import { api, fetchEvaluation, getErrorMessage } from "../../../lib/api";
-import type { ApiResponse, Course, Evaluation } from "../../../types";
+import { useCourse } from "../../../hooks/useCourses";
+import { useEvaluation, useSetEvaluation } from "../../../hooks/useEvaluation";
+import { getErrorMessage } from "../../../lib/api";
 import EvaluationPage from "./EvaluationPage";
 import RoundLanding from "./RoundLanding";
 
 export default function EvaluationFlow() {
   const { courseId = "", roundId = "" } = useParams();
-  const [course, setCourse] = useState<Course | null>(null);
-  const [data, setData] = useState<Evaluation | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    Promise.all([api.get<ApiResponse<Course>>(`/courses/${courseId}`), fetchEvaluation(roundId)])
-      .then(([c, e]) => {
-        setCourse(c.data.data);
-        setData(e);
-      })
-      .catch((err) => setError(getErrorMessage(err)));
-  }, [courseId, roundId]);
+  const courseQuery = useCourse(courseId);
+  const evaluationQuery = useEvaluation(roundId);
+  const setData = useSetEvaluation(courseId, roundId);
+  const course = courseQuery.data;
+  const data = evaluationQuery.data;
+  const error = courseQuery.error ?? evaluationQuery.error;
 
   if (error)
     return (
       <div className="px-4 py-6 min-[900px]:px-10">
-        <Alert>{error}</Alert>
+        <Alert>{getErrorMessage(error)}</Alert>
       </div>
     );
   if (!course || !data)

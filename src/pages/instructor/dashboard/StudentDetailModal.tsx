@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
 import { Quote, Sparkles, TriangleAlert } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { Modal } from "../../../components/ui/Modal";
-import { api, getErrorMessage } from "../../../lib/api";
+import { useStudentFeedback } from "../../../hooks/useRoundOverview";
+import { getErrorMessage } from "../../../lib/api";
 import { cn } from "../../../lib/cn";
 import { FLAG_LABEL } from "../../../lib/evaluation";
-import type { ApiResponse, StudentFeedbackDetail } from "../../../types";
+import type { StudentFeedbackDetail } from "../../../types";
 
 const ACTION_LABEL = {
   edited: { label: "แก้แล้ว", className: "bg-emerald-50 text-emerald-700" },
@@ -58,15 +58,7 @@ export default function StudentDetailModal({
   studentId: string;
   onClose: () => void;
 }) {
-  const [data, setData] = useState<StudentFeedbackDetail | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api
-      .get<ApiResponse<StudentFeedbackDetail>>(`/feedback/rounds/${roundId}/students/${studentId}`)
-      .then((res) => setData(res.data.data))
-      .catch((err) => setError(getErrorMessage(err)));
-  }, [roundId, studentId]);
+  const { data, error } = useStudentFeedback(roundId, studentId);
 
   const ratingQs = data?.questions.filter((q) => q.type === "rating") ?? [];
   const textQs = data?.questions.filter((q) => q.type === "text") ?? [];
@@ -74,7 +66,7 @@ export default function StudentDetailModal({
   return (
     <Modal title={data ? data.student.name : "รายละเอียดนักศึกษา"} size="xl" onClose={onClose}>
       <div className="flex flex-col gap-6 px-6 py-6">
-        {error && <Alert>{error}</Alert>}
+        {error && <Alert>{getErrorMessage(error)}</Alert>}
         {!data && !error && <div className="h-40 animate-pulse rounded-xl bg-muted" aria-busy="true" aria-label="กำลังโหลด" />}
 
         {data && (

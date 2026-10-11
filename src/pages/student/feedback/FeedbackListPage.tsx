@@ -1,14 +1,13 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, MessageSquare } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { buttonClass } from "../../../components/ui/button-variants";
 import { Card } from "../../../components/ui/Card";
-import { api, getErrorMessage } from "../../../lib/api";
+import { useFeedbackList } from "../../../hooks/useFeedback";
+import { getErrorMessage } from "../../../lib/api";
 import { cn } from "../../../lib/cn";
 import { formatCourseCode } from "../../../lib/course";
 import { formatDateTime } from "../../../lib/date";
-import type { ApiResponse, FeedbackListItem } from "../../../types";
 
 function ReleasedChip({ label, on }: { label: string; on: boolean }) {
   return (
@@ -26,21 +25,13 @@ function ReleasedChip({ label, on }: { label: string; on: boolean }) {
 }
 
 export default function FeedbackListPage() {
-  const [items, setItems] = useState<FeedbackListItem[] | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api
-      .get<ApiResponse<FeedbackListItem[]>>("/feedback")
-      .then((res) => setItems(res.data.data))
-      .catch((err) => setError(getErrorMessage(err)));
-  }, []);
+  const { data: items, error } = useFeedbackList();
 
   return (
     <div className="px-4 py-6 min-[900px]:px-10 min-[900px]:py-8">
       <h1 className="mb-8 text-2xl font-bold text-foreground">ฟีดแบ็ก</h1>
 
-      {error && <Alert>{error}</Alert>}
+      {error && <Alert>{getErrorMessage(error)}</Alert>}
 
       {!items && !error && (
         <div className="grid grid-cols-1 gap-5 min-[900px]:grid-cols-2" aria-busy="true" aria-label="กำลังโหลด">

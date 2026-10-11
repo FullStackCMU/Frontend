@@ -9,6 +9,14 @@ export const FLAG_LABEL: Record<FlagCategory, string> = {
   other: "อื่นๆ",
 };
 
+export function levelText(anchors: EvalQuestion["anchors"], score: number) {
+  const exact = anchors.find((a) => a.score === score);
+  if (exact) return exact.text;
+  const lower = anchors.findLast((a) => a.score < score);
+  const upper = anchors.find((a) => a.score > score);
+  return lower && upper ? `อยู่ระหว่างระดับ ${lower.score} กับ ${upper.score}` : null;
+}
+
 export type AnswerMap = Record<string, { score: number | null; comment: string }>;
 
 export const answerKey = (questionId: string, evaluateeId: string) => `${questionId}:${evaluateeId}`;

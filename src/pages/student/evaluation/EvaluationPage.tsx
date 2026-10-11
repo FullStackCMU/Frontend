@@ -13,12 +13,13 @@ import {
   answerKey,
   FLAG_LABEL,
   isQuestionComplete,
+  levelText,
   MAX_COMMENT_LENGTH,
   toAnswerList,
   toAnswerMap,
   type AnswerMap,
 } from "../../../lib/evaluation";
-import type { CommentWarning, Course, EvalTarget, Evaluation } from "../../../types";
+import type { CommentWarning, Course, EvalQuestion, EvalTarget, Evaluation } from "../../../types";
 
 const PEER_NOTE = "เพื่อนคนนี้จะเห็นความเห็นแบบไม่ระบุชื่อ หลังอาจารย์เผยแพร่ผล";
 const SELF_NOTE = "ความเห็นถึงตัวเอง อาจารย์ผู้สอนเท่านั้นที่เห็น";
@@ -31,6 +32,29 @@ type SaveState =
   | { kind: "saving" }
   | { kind: "saved"; at: Date }
   | { kind: "error"; message: string };
+
+type Step =
+  | { kind: "rating"; question: EvalQuestion }
+  | { kind: "text"; questions: EvalQuestion[] }
+  | { kind: "review" };
+
+// มิติละหน้า → ความเห็นรายบุคคลรวมหน้าเดียว → ทบทวนก่อนส่ง
+function buildSteps(questions: EvalQuestion[]): Step[] {
+  const text = questions.filter((q) => q.type === "text");
+  return [
+    ...questions.filter((q) => q.type === "rating").map((question) => ({ kind: "rating" as const, question })),
+    ...(text.length > 0 ? [{ kind: "text" as const, questions: text }] : []),
+    { kind: "review" },
+  ];
+}
+
+function stepQuestions(step: Step) {
+  return step.kind === "rating" ? [step.question] : step.kind === "text" ? step.questions : [];
+}
+
+function stepLabel(step: Step) {
+  return step.kind === "rating" ? step.question.prompt : step.kind === "text" ? "ความเห็นรายบุคคล" : "ทบทวนก่อนส่ง";
+}
 
 const timeFmt = new Intl.DateTimeFormat("th-TH", { hour: "2-digit", minute: "2-digit" });
 
@@ -49,20 +73,46 @@ function TargetHeader({ target, badge }: { target: EvalTarget; badge?: string })
   );
 }
 
+function RubricPanel({ question, min, max }: { question: EvalQuestion; min: number; max: number }) {
+  const between = Array.from({ length: max - min + 1 }, (_, i) => min + i).filter(
+    (s) => !question.anchors.some((a) => a.score === s)
+  );
+  return (
+    <section aria-label="เกณฑ์การให้คะแนน" className="mb-6 rounded-2xl border border-border bg-muted px-4 py-4">
+      <dl className="grid gap-4 min-[700px]:grid-cols-3">
+        {question.anchors.map((a) => (
+          <div key={a.score}>
+            <dt className="mb-1 text-xs font-bold text-primary">ระดับ {a.score}</dt>
+            <dd className="text-sm leading-relaxed text-foreground">{a.text}</dd>
+          </div>
+        ))}
+      </dl>
+      {between.length > 0 && (
+        <p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
+          ระดับ {between.join(" และ ")} ใช้เมื่อพฤติกรรมอยู่ระหว่างระดับข้างเคียง
+        </p>
+      )}
+    </section>
+  );
+}
+
 function RatingCard({
   target,
   min,
   max,
+  anchors,
   value,
   onChange,
 }: {
   target: EvalTarget;
   min: number;
   max: number;
+  anchors: EvalQuestion["anchors"];
   value: number | null;
   onChange: (score: number) => void;
 }) {
   const scores = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+  const level = value !== null ? levelText(anchors, value) : null;
   return (
     <div className={cn("rounded-2xl border px-4 py-4", target.isSelf ? "border-indigo-200 bg-secondary" : "border-border bg-card")}>
       <TargetHeader target={target} badge={value !== null ? `${value}/${max}` : undefined} />
@@ -85,10 +135,16 @@ function RatingCard({
           </button>
         ))}
       </div>
-      <div className="mt-1.5 flex justify-between text-[11px] text-muted-foreground">
-        <span>{min} = ต้องปรับปรุง</span>
-        <span>{max} = ดีเยี่ยม</span>
-      </div>
+      <p className="mt-2 text-xs leading-relaxed text-muted-foreground" aria-live="polite">
+        {value === null ? (
+          "เลือกระดับที่ตรงกับพฤติกรรมมากที่สุด"
+        ) : (
+          <>
+            <span className="font-semibold text-foreground">ระดับ {value}</span>
+            {level && ` — ${level}`}
+          </>
+        )}
+      </p>
     </div>
   );
 }
@@ -146,7 +202,9 @@ function CommentWarningBox({
   );
 }
 
-function TextCard({
+function CommentField({
+  id,
+  label,
   target,
   value,
   onChange,
@@ -154,6 +212,8 @@ function TextCard({
   acknowledged,
   onAcknowledge,
 }: {
+  id: string;
+  label: string;
   target: EvalTarget;
   value: string;
   onChange: (text: string) => void;
@@ -162,32 +222,25 @@ function TextCard({
   onAcknowledge: (value: boolean) => void;
 }) {
   const over = value.length > MAX_COMMENT_LENGTH;
-  const id = `comment-${target.id}`;
   const focusField = () => document.getElementById(id)?.focus();
   return (
-    <div className={cn("rounded-2xl border px-4 py-4", target.isSelf ? "border-indigo-200 bg-secondary" : "border-border bg-card")}>
-      <TargetHeader target={target} />
-      <label htmlFor={id} className="sr-only">
-        ความเห็นถึง {target.name}
-      </label>
+    <div>
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <label htmlFor={id} className="text-sm font-medium text-foreground">
+          {label}
+        </label>
+        <span className={cn("shrink-0 font-mono text-xs", over ? "text-red-600" : "text-muted-foreground")}>
+          {value.length} / {MAX_COMMENT_LENGTH}
+        </span>
+      </div>
       <textarea
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={target.isSelf ? "เขียนถึงตัวเอง..." : "เขียนถึงเพื่อนคนนี้..."}
-        aria-describedby={`${id}-note`}
         aria-invalid={over || (!!warning && !acknowledged) || undefined}
         className={cn(inputClass, "min-h-[88px] resize-none leading-relaxed field-sizing-content")}
       />
-      <div className="mt-1.5 flex items-center justify-between gap-2">
-        <p id={`${id}-note`} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Lock size={11} className="shrink-0" />
-          {target.isSelf ? SELF_NOTE : PEER_NOTE}
-        </p>
-        <span className={cn("shrink-0 font-mono text-xs", over ? "text-red-600" : "text-muted-foreground")}>
-          {value.length} / {MAX_COMMENT_LENGTH}
-        </span>
-      </div>
       {warning && (
         <CommentWarningBox
           warning={warning}
@@ -204,9 +257,97 @@ function TextCard({
   );
 }
 
+function ReviewStep({
+  data,
+  steps,
+  answers,
+  onEdit,
+}: {
+  data: Evaluation;
+  steps: Step[];
+  answers: AnswerMap;
+  onEdit: (stepIndex: number) => void;
+}) {
+  const nameOf = (t: EvalTarget) => (t.isSelf ? "ตัวคุณเอง" : t.name);
+  const header = (i: number) => (
+    <div className="mb-3 flex items-start justify-between gap-3">
+      <p className="text-sm font-semibold text-foreground">{stepLabel(steps[i])}</p>
+      <button
+        type="button"
+        onClick={() => onEdit(i)}
+        aria-label={`แก้ไข ${stepLabel(steps[i])}`}
+        className="shrink-0 text-xs font-medium text-primary hover:underline"
+      >
+        แก้ไข
+      </button>
+    </div>
+  );
+  return (
+    <div className="flex flex-col gap-3">
+      {steps.map((s, i) => {
+        if (s.kind === "rating")
+          return (
+            <div key={s.question.id} className="rounded-2xl border border-border bg-card px-4 py-4">
+              {header(i)}
+              <ul className="flex flex-wrap gap-2">
+                {data.targets.map((t) => {
+                  const score = answers[answerKey(s.question.id, t.id)]?.score ?? null;
+                  return (
+                    <li
+                      key={t.id}
+                      className={cn(
+                        "flex items-center gap-2 rounded-full border px-3 py-1 text-xs",
+                        score === null ? "border-amber-300 bg-amber-50 text-amber-800" : "border-border bg-muted text-foreground"
+                      )}
+                    >
+                      <span>{nameOf(t)}</span>
+                      <span className="font-mono font-bold">{score ?? "ยังไม่ให้"}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        if (s.kind === "text")
+          return (
+            <div key="text" className="rounded-2xl border border-border bg-card px-4 py-4">
+              {header(i)}
+              <div className="flex flex-col divide-y divide-border">
+                {data.targets.map((t) => (
+                  <div key={t.id} className="py-3 first:pt-0 last:pb-0">
+                    <p className="mb-1.5 text-xs font-semibold text-foreground">{nameOf(t)}</p>
+                    <dl className="flex flex-col gap-1.5">
+                      {s.questions.map((q) => {
+                        const comment = answers[answerKey(q.id, t.id)]?.comment.trim() ?? "";
+                        return (
+                          <div key={q.id}>
+                            <dt className="text-[11px] text-muted-foreground">{q.prompt}</dt>
+                            <dd
+                              className={cn(
+                                "text-sm leading-relaxed whitespace-pre-wrap",
+                                comment ? "text-foreground" : "text-amber-700"
+                              )}
+                            >
+                              {comment || "ยังไม่ได้เขียน"}
+                            </dd>
+                          </div>
+                        );
+                      })}
+                    </dl>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        return null;
+      })}
+    </div>
+  );
+}
+
 const DECIDE_NOTICE = "มีความเห็นที่ AI แนะนำให้ทบทวน — เลือก “แก้ข้อความ” หรือ “ส่งตามนี้” ก่อนไปต่อ";
 
-// AI ตรวจตอนกดถัดไปจากคำถาม text (เฉพาะข้อความที่เปลี่ยน) และตอนกดส่ง
+// AI ตรวจตอนกดถัดไปจากหน้าความเห็น (เฉพาะข้อความที่เปลี่ยน) และตอนกดส่ง
 export default function EvaluationPage({
   course,
   data,
@@ -219,9 +360,11 @@ export default function EvaluationPage({
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const questions = data.questions;
-  const index = Math.min(Math.max(Number(params.get("q") ?? 1) - 1, 0), questions.length - 1) || 0;
-  const question = questions[index];
-  const isLast = index === questions.length - 1;
+  const steps = buildSteps(questions);
+  const index = Math.min(Math.max(Number(params.get("q") ?? 1) - 1, 0), steps.length - 1) || 0;
+  const step = steps[index];
+  const isLast = index === steps.length - 1;
+  const stepOf = (questionId: string) => steps.findIndex((s) => stepQuestions(s).some((q) => q.id === questionId));
   const courseUrl = `/courses/${course.id}`;
   const roundUrl = `${courseUrl}/rounds/${data.round.id}`;
 
@@ -245,8 +388,8 @@ export default function EvaluationPage({
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  function update(evaluateeId: string, patch: Partial<AnswerMap[string]>) {
-    const key = answerKey(question.id, evaluateeId);
+  function update(questionId: string, evaluateeId: string, patch: Partial<AnswerMap[string]>) {
+    const key = answerKey(questionId, evaluateeId);
     setAnswers((prev) => {
       const current = (prev[key] as AnswerMap[string] | undefined) ?? { score: null, comment: "" };
       return { ...prev, [key]: { ...current, ...patch } };
@@ -288,12 +431,10 @@ export default function EvaluationPage({
   }
 
   // คืน null = บันทึกไม่สำเร็จ
-  async function save(checkQuestionId?: string): Promise<WarningState | null> {
-    const toCheck = checkQuestionId
-      ? data.targets
-          .map((t) => answerKey(checkQuestionId, t.id))
-          .filter((k) => commentOf(answers, k).trim() && checked[k] !== commentOf(answers, k))
-      : [];
+  async function save(checkQuestionIds: string[] = []): Promise<WarningState | null> {
+    const toCheck = checkQuestionIds
+      .flatMap((id) => data.targets.map((t) => answerKey(id, t.id)))
+      .filter((k) => commentOf(answers, k).trim() && checked[k] !== commentOf(answers, k));
     if (!dirty && toCheck.length === 0) return warnings;
 
     const version = editVersion.current;
@@ -304,7 +445,7 @@ export default function EvaluationPage({
       const updated = await saveEvaluationDraft(
         data.round.id,
         toAnswerList(sent),
-        toCheck.length > 0 ? [checkQuestionId!] : undefined
+        toCheck.length > 0 ? checkQuestionIds : undefined
       );
       if (editVersion.current === version) setDirty(false);
       setSaveState({ kind: "saved", at: new Date() });
@@ -325,10 +466,10 @@ export default function EvaluationPage({
   }
 
   async function goTo(i: number) {
-    const checkId = i > index && question.type === "text" ? question.id : undefined;
-    const latest = await save(checkId);
+    const checkIds = i > index && step.kind === "text" ? step.questions.map((q) => q.id) : [];
+    const latest = await save(checkIds);
     if (!latest) return;
-    if (checkId && data.targets.some((t) => needsDecision(answerKey(checkId, t.id), latest))) {
+    if (checkIds.some((id) => data.targets.some((t) => needsDecision(answerKey(id, t.id), latest)))) {
       setWarningNotice(DECIDE_NOTICE);
       return;
     }
@@ -347,13 +488,14 @@ export default function EvaluationPage({
       return;
     }
     if (incomplete.length > 0) {
-      setSubmitError(`ยังตอบไม่ครบ: คำถามข้อ ${incomplete.map((q) => q.orderNo).join(", ")}`);
-      goTo(questions.indexOf(incomplete[0]));
+      const labels = new Set(incomplete.map((q) => stepLabel(steps[stepOf(q.id)])));
+      setSubmitError(`ยังตอบไม่ครบ: ${[...labels].join(", ")}`);
+      goTo(stepOf(incomplete[0].id));
       return;
     }
-    const undecided = questions.findIndex((q) => data.targets.some((t) => needsDecision(answerKey(q.id, t.id))));
-    if (undecided >= 0) {
-      if (undecided !== index) navigateTo(undecided);
+    const undecided = questions.find((q) => data.targets.some((t) => needsDecision(answerKey(q.id, t.id))));
+    if (undecided) {
+      if (stepOf(undecided.id) !== index) navigateTo(stepOf(undecided.id));
       setWarningNotice(DECIDE_NOTICE);
       return;
     }
@@ -375,8 +517,8 @@ export default function EvaluationPage({
         updated.warnings
       );
       setConfirming(false);
-      const first = questions.findIndex((q) => data.targets.some((t) => needsDecision(answerKey(q.id, t.id), latest)));
-      if (first >= 0 && first !== index) navigateTo(first);
+      const first = questions.find((q) => data.targets.some((t) => needsDecision(answerKey(q.id, t.id), latest)));
+      if (first && stepOf(first.id) !== index) navigateTo(stepOf(first.id));
       setWarningNotice("มีความเห็นที่ AI แนะนำให้ทบทวนก่อนส่ง — เลือก “แก้ข้อความ” หรือ “ส่งตามนี้” แล้วกดส่งอีกครั้ง");
       return;
     }
@@ -410,13 +552,13 @@ export default function EvaluationPage({
         <div className="sticky top-12 z-10 border-b border-border bg-card px-4 pt-4 pb-3 min-[900px]:top-0 min-[900px]:px-8">
           <div className="mb-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
             <span className="font-medium whitespace-nowrap text-foreground">
-              คำถามที่ {index + 1} จาก {questions.length}
+              ขั้นที่ {index + 1} จาก {steps.length}
             </span>
             <span className="flex items-center gap-2">
               <span
                 className={cn("flex items-center gap-1 whitespace-nowrap", saveState.kind === "error" && "text-red-600")}
                 aria-live="polite"
-                title="บันทึกร่างอัตโนมัติทุกครั้งที่เปลี่ยนคำถาม"
+                title="บันทึกร่างอัตโนมัติทุกครั้งที่เปลี่ยนหน้า"
               >
                 <Save size={12} />
                 {saveLabel}
@@ -435,7 +577,7 @@ export default function EvaluationPage({
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full rounded-full bg-primary transition-all duration-300"
-              style={{ width: `${((index + 1) / questions.length) * 100}%` }}
+              style={{ width: `${((index + 1) / steps.length) * 100}%` }}
             />
           </div>
         </div>
@@ -449,38 +591,75 @@ export default function EvaluationPage({
             </Alert>
           )}
 
-          <h2 className="mb-1 text-xl leading-snug font-bold text-foreground">{question.prompt}</h2>
-          <p className="mb-6 text-sm text-muted-foreground">
-            {question.type === "rating"
-              ? `ให้คะแนน ${data.round.scaleMin}–${data.round.scaleMax} กับทุกคนรวมถึงตัวเอง`
-              : "เขียนความเห็นถึงทุกคนรวมถึงตัวเอง"}
-          </p>
+          <h2 className="mb-1 text-xl leading-snug font-bold text-foreground">{stepLabel(step)}</h2>
 
-          <div className="flex flex-col gap-3">
-            {data.targets.map((t) => {
-              const a = answers[answerKey(question.id, t.id)];
-              return question.type === "rating" ? (
-                <RatingCard
-                  key={t.id}
-                  target={t}
-                  min={data.round.scaleMin}
-                  max={data.round.scaleMax}
-                  value={a?.score ?? null}
-                  onChange={(score) => update(t.id, { score })}
-                />
-              ) : (
-                <TextCard
-                  key={t.id}
-                  target={t}
-                  value={a?.comment ?? ""}
-                  onChange={(comment) => update(t.id, { comment })}
-                  warning={activeWarning(answerKey(question.id, t.id))}
-                  acknowledged={isAcknowledged(answerKey(question.id, t.id))}
-                  onAcknowledge={(v) => acknowledge(answerKey(question.id, t.id), v)}
-                />
-              );
-            })}
-          </div>
+          {step.kind === "rating" && (
+            <>
+              <p className="mb-4 text-sm text-muted-foreground">{step.question.description}</p>
+              <RubricPanel question={step.question} min={data.round.scaleMin} max={data.round.scaleMax} />
+              <p className="mb-3 text-sm font-medium text-foreground">
+                ให้คะแนน {data.round.scaleMin}–{data.round.scaleMax} กับทุกคนรวมถึงตัวเอง
+              </p>
+              <div className="flex flex-col gap-3">
+                {data.targets.map((t) => (
+                  <RatingCard
+                    key={t.id}
+                    target={t}
+                    min={data.round.scaleMin}
+                    max={data.round.scaleMax}
+                    anchors={step.question.anchors}
+                    value={answers[answerKey(step.question.id, t.id)]?.score ?? null}
+                    onChange={(score) => update(step.question.id, t.id, { score })}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          {step.kind === "text" && (
+            <>
+              <p className="mb-6 text-sm text-muted-foreground">เขียนถึงทุกคนรวมถึงตัวเอง ส่วนนี้ไม่นำไปคิดคะแนน</p>
+              <div className="flex flex-col gap-3">
+                {data.targets.map((t) => (
+                  <div
+                    key={t.id}
+                    className={cn("rounded-2xl border px-4 py-4", t.isSelf ? "border-indigo-200 bg-secondary" : "border-border bg-card")}
+                  >
+                    <TargetHeader target={t} />
+                    <div className="flex flex-col gap-4">
+                      {step.questions.map((q) => {
+                        const key = answerKey(q.id, t.id);
+                        return (
+                          <CommentField
+                            key={q.id}
+                            id={`comment-${key}`}
+                            label={q.prompt}
+                            target={t}
+                            value={answers[key]?.comment ?? ""}
+                            onChange={(comment) => update(q.id, t.id, { comment })}
+                            warning={activeWarning(key)}
+                            acknowledged={isAcknowledged(key)}
+                            onAcknowledge={(v) => acknowledge(key, v)}
+                          />
+                        );
+                      })}
+                    </div>
+                    <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Lock size={11} className="shrink-0" />
+                      {t.isSelf ? SELF_NOTE : PEER_NOTE}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {step.kind === "review" && (
+            <>
+              <p className="mb-6 text-sm text-muted-foreground">ตรวจคำตอบอีกครั้ง ส่งแล้วจะแก้ไขไม่ได้</p>
+              <ReviewStep data={data} steps={steps} answers={answers} onEdit={goTo} />
+            </>
+          )}
         </div>
 
         {/* มือถือต้องอยู่เหนือแถบเมนูล่าง */}
@@ -489,7 +668,7 @@ export default function EvaluationPage({
             <Button
               variant="outline"
               size="icon"
-              aria-label="คำถามก่อนหน้า"
+              aria-label="หน้าก่อนหน้า"
               onClick={() => goTo(index - 1)}
               disabled={index === 0 || saveState.kind === "saving"}
             >
@@ -508,13 +687,14 @@ export default function EvaluationPage({
       </div>
 
       <aside className="sticky top-0 hidden w-[280px] shrink-0 self-start border-l border-border px-5 py-6 min-[1100px]:block">
-        <p className="mb-4 text-[10px] font-bold tracking-widest text-muted-foreground uppercase">คำถาม</p>
+        <p className="mb-4 text-[10px] font-bold tracking-widest text-muted-foreground uppercase">ขั้นตอน</p>
         <ol className="mb-6 flex flex-col gap-1">
-          {questions.map((q, i) => {
-            const complete = isQuestionComplete(data, q, answers);
+          {steps.map((s, i) => {
+            const own = stepQuestions(s);
+            const complete = own.length > 0 && own.every((q) => isQuestionComplete(data, q, answers));
             const active = i === index;
             return (
-              <li key={q.id}>
+              <li key={i}>
                 <button
                   type="button"
                   onClick={() => goTo(i)}
@@ -539,7 +719,7 @@ export default function EvaluationPage({
                     )}
                   </span>
                   <span className={cn("line-clamp-2 text-xs leading-snug", active ? "font-semibold text-foreground" : "text-muted-foreground")}>
-                    {q.prompt}
+                    {stepLabel(s)}
                   </span>
                 </button>
               </li>

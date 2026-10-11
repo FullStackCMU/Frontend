@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { CircleCheck, FileText, Pencil, Plus, Users } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
-import { api, getErrorMessage } from "../../../lib/api";
-import type { ApiResponse, Group, GroupsOverview } from "../../../types";
+import { useCourseGroups } from "../../../hooks/useCourseMembers";
+import { useCourseChanged } from "../../../hooks/useCourses";
+import { getErrorMessage } from "../../../lib/api";
+import { keys } from "../../../lib/query-keys";
+import type { Group, GroupsOverview } from "../../../types";
 import GroupFormModal from "./GroupFormModal";
 
 const UNASSIGNED_PREVIEW = 12;
@@ -60,22 +64,17 @@ function GroupCard({ group, onEdit }: { group: Group; onEdit: () => void }) {
 }
 
 export default function GroupsTab({ courseId }: { courseId: string }) {
-  const [data, setData] = useState<GroupsOverview | null>(null);
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
+  const { data, error } = useCourseGroups(courseId);
+  const courseChanged = useCourseChanged(courseId);
   // null = ปิด, "new" = สร้างใหม่, Group = แก้กลุ่มนั้น
   const [editing, setEditing] = useState<Group | "new" | null>(null);
   const [showAllUnassigned, setShowAllUnassigned] = useState(false);
 
-  useEffect(() => {
-    api
-      .get<ApiResponse<GroupsOverview>>(`/groups?courseId=${courseId}`)
-      .then((res) => setData(res.data.data))
-      .catch((err) => setError(getErrorMessage(err)));
-  }, [courseId]);
-
+  // แสดงกลุ่มที่บันทึกทันที แล้วให้ข้อมูลอื่นของวิชา (เช่นชื่อกลุ่มในรายชื่อนักศึกษา) โหลดตาม
   function handleSaved(saved: Group) {
     setEditing(null);
-    setData((prev) => {
+    queryClient.setQueryData<GroupsOverview>(keys.groups(courseId), (prev) => {
       if (!prev) return prev;
       const exists = prev.groups.some((g) => g.id === saved.id);
       return {
@@ -83,9 +82,10 @@ export default function GroupsTab({ courseId }: { courseId: string }) {
         groups: exists ? prev.groups.map((g) => (g.id === saved.id ? saved : g)) : [...prev.groups, saved],
       };
     });
+    courseChanged();
   }
 
-  if (error) return <Alert>{error}</Alert>;
+  if (error) return <Alert>{getErrorMessage(error)}</Alert>;
   if (!data)
     return (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-label="กำลังโหลด">
