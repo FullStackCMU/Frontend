@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, ChevronRight, Users } from "lucide-react";
 import { Alert } from "../../components/ui/Alert";
 import { buttonClass } from "../../components/ui/button-variants";
 import { Card } from "../../components/ui/Card";
-import { api, getErrorMessage } from "../../lib/api";
+import { useStudentCourses } from "../../hooks/useCourses";
+import { getErrorMessage } from "../../lib/api";
 import { cn } from "../../lib/cn";
 import { formatCourseCode, formatTerm } from "../../lib/course";
 import { TONE_CLASS } from "../../lib/status";
-import type { ApiResponse, Course } from "../../types";
+import type { Course } from "../../types";
 
 function CourseCard({ course }: { course: Course }) {
   return (
@@ -51,21 +51,13 @@ function CourseCard({ course }: { course: Course }) {
 }
 
 export default function MyCoursesPage() {
-  const [courses, setCourses] = useState<Course[] | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api
-      .get<ApiResponse<Course[]>>("/courses")
-      .then((res) => setCourses(res.data.data.filter((c) => c.role === "student")))
-      .catch((err) => setError(getErrorMessage(err)));
-  }, []);
+  const { data: courses, error } = useStudentCourses();
 
   return (
     <div className="px-4 py-6 min-[900px]:px-10 min-[900px]:py-8">
       <h1 className="mb-8 text-2xl font-bold text-foreground">วิชาของฉัน</h1>
 
-      {error && <Alert>{error}</Alert>}
+      {error && <Alert>{getErrorMessage(error)}</Alert>}
 
       {!courses && !error && (
         <div className="grid grid-cols-1 gap-5 min-[900px]:grid-cols-2 min-[1280px]:grid-cols-3" aria-busy="true" aria-label="กำลังโหลด">

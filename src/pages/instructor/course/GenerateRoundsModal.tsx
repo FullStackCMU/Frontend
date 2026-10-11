@@ -11,8 +11,6 @@ import type { ApiResponse, CourseRound } from "../../../types";
 // ตรงกับ Backend/src/routes/round.ts (POST /rounds/generate)
 const MAX_ROUNDS = 20;
 const INTERVAL_WEEKS = [1, 2, 3, 4, 6, 8];
-const SCALE_MINS = [0, 1];
-const SCALE_MAXES = [3, 4, 5, 6, 7, 8, 9, 10];
 
 export default function GenerateRoundsModal({
   courseId,
@@ -30,8 +28,6 @@ export default function GenerateRoundsModal({
   const [firstOpensAt, setFirstOpensAt] = useState(toLocalInput(nextMorning(earliest)));
   const [intervalWeeks, setIntervalWeeks] = useState(2);
   const [openDays, setOpenDays] = useState("7");
-  const [scaleMin, setScaleMin] = useState(1);
-  const [scaleMax, setScaleMax] = useState(5);
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -72,8 +68,6 @@ export default function GenerateRoundsModal({
         firstOpensAt: first.toISOString(),
         openDays: days,
         intervalWeeks,
-        scaleMin,
-        scaleMax,
       });
       onSaved(res.data.data);
     } catch (err) {
@@ -157,41 +151,9 @@ export default function GenerateRoundsModal({
           </Field>
         </div>
 
-        <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1.5 text-sm font-medium text-foreground">สเกลคะแนน</legend>
-          <div className="flex items-center gap-2">
-            <div className="w-24">
-            <select
-              aria-label="คะแนนต่ำสุด"
-              value={scaleMin}
-              onChange={(e) => setScaleMin(Number(e.target.value))}
-              className={inputClass}
-            >
-              {SCALE_MINS.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-            </div>
-            <span className="text-muted-foreground">ถึง</span>
-            <div className="w-24">
-            <select
-              aria-label="คะแนนสูงสุด"
-              value={scaleMax}
-              onChange={(e) => setScaleMax(Number(e.target.value))}
-              className={inputClass}
-            >
-              {SCALE_MAXES.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground">ใช้กับคำถามแบบให้คะแนนในรอบที่สร้างครั้งนี้ แก้ภายหลังไม่ได้</p>
-        </fieldset>
+        <p className="text-xs text-muted-foreground">
+          ทุกรอบใช้รูบริกมาตรฐาน 5 มิติ สเกลคะแนน 1–5 และคำถามเขียนอิสระ 2 ข้อ
+        </p>
 
         {preview.length > 0 && (
           <div className="flex flex-col gap-2">

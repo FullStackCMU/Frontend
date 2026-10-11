@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, Navigate, NavLink, Route, Routes, useParams } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { Button } from "../../../components/ui/Button";
-import { api, getErrorMessage } from "../../../lib/api";
+import { useCourse, useCourseChanged } from "../../../hooks/useCourses";
+import { getErrorMessage } from "../../../lib/api";
 import { cn } from "../../../lib/cn";
 import { formatCourseCode, formatTerm } from "../../../lib/course";
-import type { ApiResponse, Course } from "../../../types";
 import StudentsTab from "./StudentsTab";
 import GroupsTab from "./GroupsTab";
 import RoundsTab from "./RoundsTab";
@@ -14,18 +14,9 @@ import UploadStudentsModal from "./UploadStudentsModal";
 
 export default function CourseDetail() {
   const { courseId = "" } = useParams();
-  const [course, setCourse] = useState<Course | null>(null);
-  const [error, setError] = useState("");
+  const { data: course, error } = useCourse(courseId);
+  const courseChanged = useCourseChanged(courseId);
   const [uploading, setUploading] = useState(false);
-  // ใช้เป็น key ให้แท็บโหลดใหม่หลัง import
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    api
-      .get<ApiResponse<Course>>(`/courses/${courseId}`)
-      .then((res) => setCourse(res.data.data))
-      .catch((err) => setError(getErrorMessage(err)));
-  }, [courseId]);
 
   const base = `/courses/${courseId}`;
   const tabs = [
@@ -44,7 +35,7 @@ export default function CourseDetail() {
         คอร์สของฉัน
       </Link>
 
-      {error && <Alert>{error}</Alert>}
+      {error && <Alert>{getErrorMessage(error)}</Alert>}
 
       {!course && !error && (
         <div className="mb-6 flex flex-col gap-2" aria-busy="true" aria-label="กำลังโหลด">
@@ -92,11 +83,9 @@ export default function CourseDetail() {
           <Routes>
             <Route
               index
-              element={
-                <StudentsTab key={reloadKey} courseId={courseId} onUpload={() => setUploading(true)} />
-              }
+              element={<StudentsTab courseId={courseId} onUpload={() => setUploading(true)} />}
             />
-            <Route path="groups" element={<GroupsTab key={reloadKey} courseId={courseId} />} />
+            <Route path="groups" element={<GroupsTab courseId={courseId} />} />
             <Route path="rounds" element={<RoundsTab courseId={courseId} />} />
             <Route path="*" element={<Navigate to={base} replace />} />
           </Routes>
@@ -105,7 +94,7 @@ export default function CourseDetail() {
             <UploadStudentsModal
               courseId={courseId}
               onClose={() => setUploading(false)}
-              onImported={() => setReloadKey((k) => k + 1)}
+              onImported={courseChanged}
             />
           )}
         </>

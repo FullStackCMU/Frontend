@@ -1,15 +1,16 @@
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Check, ChevronRight, Lock, Quote } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { Breadcrumb } from "../../../components/ui/Breadcrumb";
 import { buttonClass } from "../../../components/ui/button-variants";
 import { Card } from "../../../components/ui/Card";
-import { api, getErrorMessage } from "../../../lib/api";
+import { useFeedbackList, useRoundFeedback } from "../../../hooks/useFeedback";
+import { getErrorMessage } from "../../../lib/api";
 import { cn } from "../../../lib/cn";
 import { formatCourseCode } from "../../../lib/course";
 import { formatDateTime } from "../../../lib/date";
-import type { ApiResponse, FeedbackListItem, RoundFeedback } from "../../../types";
+import type { RoundFeedback } from "../../../types";
 
 const RAMP = ["bg-ramp-1", "bg-ramp-2", "bg-ramp-3", "bg-ramp-4", "bg-ramp-5"];
 
@@ -139,26 +140,15 @@ function Pending({ data }: { data: RoundFeedback }) {
 // backend ตัดส่วนที่ยังไม่เผยแพร่ออกให้แล้ว
 export default function FeedbackPage() {
   const { roundId = "" } = useParams();
-  const [data, setData] = useState<RoundFeedback | null>(null);
-  const [others, setOthers] = useState<FeedbackListItem[]>([]);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    Promise.all([
-      api.get<ApiResponse<RoundFeedback>>(`/feedback/rounds/${roundId}`),
-      api.get<ApiResponse<FeedbackListItem[]>>("/feedback"),
-    ])
-      .then(([f, list]) => {
-        setData(f.data.data);
-        setOthers(list.data.data.filter((i) => i.courseId === f.data.data.course.id && i.roundId !== roundId));
-      })
-      .catch((err) => setError(getErrorMessage(err)));
-  }, [roundId]);
+  const feedbackQuery = useRoundFeedback(roundId);
+  const listQuery = useFeedbackList();
+  const data = feedbackQuery.data;
+  const error = feedbackQuery.error ?? listQuery.error;
 
   if (error)
     return (
       <div className="px-4 py-6 min-[900px]:px-10">
-        <Alert>{error}</Alert>
+        <Alert>{getErrorMessage(error)}</Alert>
       </div>
     );
   if (!data)
@@ -170,6 +160,7 @@ export default function FeedbackPage() {
     );
 
   const { round, course, scores, comments } = data;
+  const others = listQuery.data?.filter((i) => i.courseId === course.id && i.roundId !== roundId) ?? [];
   // เผยแพร่แล้วแต่อาจไม่มีข้อมูลถ้าผู้ประเมินไม่พอ
   const released = !!(round.scoresReleasedAt || round.feedbackReleasedAt);
   const releasedAt = [round.scoresReleasedAt, round.feedbackReleasedAt].filter(Boolean).sort().at(-1);
@@ -203,6 +194,18 @@ export default function FeedbackPage() {
       {scores ? (
         <Section title="คะแนนรายด้าน">
           <div className="flex flex-col gap-6 px-6 py-5">
+            {data.overall && (
+              <div className="flex flex-col gap-2 border-b border-border pb-6">
+                <p className="text-sm font-semibold text-foreground">
+                  คะแนนรวม <span className="font-normal text-muted-foreground">เฉลี่ยจากทุกด้าน</span>
+                </p>
+                <Bar label="เพื่อน" value={data.overall.peerAverage} min={round.scaleMin} max={round.scaleMax} />
+                <Bar label="คุณให้ตัวเอง" value={data.overall.selfAverage} min={round.scaleMin} max={round.scaleMax} muted />
+                {gapNote(data.overall.peerAverage, data.overall.selfAverage) && (
+                  <p className="text-xs text-muted-foreground">{gapNote(data.overall.peerAverage, data.overall.selfAverage)}</p>
+                )}
+              </div>
+            )}
             {scores.map((s) => {
               const note = gapNote(s.peerAverage, s.selfScore);
               return (

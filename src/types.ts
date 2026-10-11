@@ -144,6 +144,9 @@ export interface EvalQuestion {
   orderNo: number;
   type: "rating" | "text";
   prompt: string;
+  description: string | null;
+  // เฉพาะ rating เรียงจากน้อยไปมาก — ระดับที่ไม่มีในนี้คือ "อยู่ระหว่าง" ระดับข้างเคียง
+  anchors: { score: number; text: string }[];
 }
 
 export interface EvalAnswer {
@@ -183,6 +186,13 @@ export interface CommentWarning {
   category: FlagCategory;
   severity: FlagSeverity;
   suggestion: string;
+}
+
+// คะแนนรวม = เฉลี่ยของคะแนนรายมิติ, gap = ตัวเอง − เพื่อน
+export interface OverallScore {
+  peerAverage: number | null;
+  selfAverage: number | null;
+  gap: number | null;
 }
 
 interface CourseRef {
@@ -228,6 +238,7 @@ export interface RoundFeedback {
         selfScore: number | null;
       }[]
     | null;
+  overall: OverallScore | null;
   comments: { questionId: string; orderNo: number; prompt: string; comments: string[] }[] | null;
 }
 
@@ -250,12 +261,48 @@ export interface OverviewRow {
   // ไม่นับตัวเอง
   peerCount: number;
   scores: { questionId: string; peerAverage: number | null; selfScore: number | null }[];
+  overall: OverallScore;
+  // เฉลี่ยคะแนนจากเพื่อนเฉพาะมิติด้านงาน / ด้านทีม
+  focus: { task: number | null; team: number | null };
+}
+
+// ตรงกับ Backend/src/lib/insights.ts — value = ค่าของนักศึกษาคนนั้น, reference = ค่าที่เอามาเทียบ
+export type ReceivedSignal = { studentId: string } & (
+  | { type: "low_overall"; value: number }
+  | { type: "low_dimension"; dimensions: { questionId: string; value: number; reference: number }[] }
+  | { type: "self_over" | "self_under"; value: number; reference: number }
+  | { type: "few_raters"; count: number }
+);
+
+export type GiverSignal = { studentId: string } & (
+  | { type: "not_submitted" }
+  | { type: "straight_lining"; value: number }
+  | { type: "self_serving"; value: number; reference: number }
+  | { type: "lenient" | "harsh"; value: number; reference: number }
+  | { type: "ignored_warnings"; count: number }
+);
+
+export type Signal = ReceivedSignal | GiverSignal;
+
+export interface OverviewGroup {
+  // null = นักศึกษาที่ยังไม่มีกลุ่ม
+  id: string | null;
+  name: string;
+  rows: OverviewRow[];
+  signals: { received: ReceivedSignal[]; givers: GiverSignal[] };
 }
 
 export interface RoundOverview {
   round: RoundSummary & { courseId: string; scaleMin: number; scaleMax: number };
-  questions: { id: string; orderNo: number; prompt: string }[];
-  groups: { id: string | null; name: string; rows: OverviewRow[] }[];
+  questions: { id: string; orderNo: number; prompt: string; focus: "task" | "team" | null }[];
+  // ค่ากลางของทั้งวิชาในรอบนี้
+  section: {
+    selfMedian: number | null;
+    peerMedian: number | null;
+    taskMedian: number | null;
+    teamMedian: number | null;
+  };
+  groups: OverviewGroup[];
   minPeers: number;
 }
 

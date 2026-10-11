@@ -9,17 +9,24 @@ export const api = axios.create({
 // ต้องเปลี่ยนหน้าเต็ม ไม่ใช่ XHR เพราะ backend redirect ไป CMU
 export const LOGIN_URL = "/api/auth/login";
 
-export const UNAUTHORIZED_EVENT = "cr-unauthorized";
+// session store ลงทะเบียนไว้ — ให้ api.ts ไม่ต้อง import store (กัน import วน)
+let handleUnauthorized = () => {};
+export function onUnauthorized(handler: () => void) {
+  handleUnauthorized = handler;
+}
 
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
-      window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
-    }
+    if (err.response?.status === 401) handleUnauthorized();
     return Promise.reject(err);
   }
 );
+
+export async function getData<T>(url: string) {
+  const res = await api.get<ApiResponse<T>>(url);
+  return res.data.data;
+}
 
 export async function fetchMe(): Promise<Me | null> {
   try {

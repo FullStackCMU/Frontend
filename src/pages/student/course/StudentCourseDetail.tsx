@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Clock } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
@@ -7,33 +6,17 @@ import { Button } from "../../../components/ui/Button";
 import { buttonClass } from "../../../components/ui/button-variants";
 import { Card } from "../../../components/ui/Card";
 import { StatusDot, StatusPill } from "../../../components/ui/StatusPill";
-import { api, getErrorMessage } from "../../../lib/api";
+import { useAvailableGroups, useMyGroup } from "../../../hooks/useCourseMembers";
+import { useCourse, useCourseChanged } from "../../../hooks/useCourses";
+import { useRounds } from "../../../hooks/useRounds";
+import { getErrorMessage } from "../../../lib/api";
 import { cn } from "../../../lib/cn";
 import { formatCourseCode, formatTerm } from "../../../lib/course";
 import { formatDateTime, formatRange } from "../../../lib/date";
 import { getRoundStatus, getStudentRoundStatus, STUDENT_LABEL } from "../../../lib/status";
-import type { ApiResponse, AvailableGroup, Course, CourseRound, Me, MyGroup } from "../../../types";
+import { useMe } from "../../../stores/useSessionStore";
+import type { CourseRound } from "../../../types";
 import { ContractCard, TeammatesCard, TeamPicker } from "./TeamSetup";
-
-type Data = {
-  course: Course;
-  rounds: CourseRound[];
-  group: MyGroup | null;
-  // โหลดเฉพาะเมื่อยังไม่มีกลุ่ม
-  available: AvailableGroup[];
-};
-
-async function loadData(courseId: string): Promise<Data> {
-  const [course, rounds, group] = await Promise.all([
-    api.get<ApiResponse<Course>>(`/courses/${courseId}`),
-    api.get<ApiResponse<CourseRound[]>>(`/rounds?courseId=${courseId}`),
-    api.get<ApiResponse<MyGroup | null>>(`/groups/my?courseId=${courseId}`),
-  ]);
-  const available = group.data.data
-    ? []
-    : (await api.get<ApiResponse<AvailableGroup[]>>(`/groups/available?courseId=${courseId}`)).data.data;
-  return { course: course.data.data, rounds: rounds.data.data, group: group.data.data, available };
-}
 
 function RoundCard({ round, blocker }: { round: CourseRound; blocker: string | null }) {
   const status = getStudentRoundStatus(round);
@@ -117,27 +100,29 @@ function InfoCard({ title, rows }: { title: string; rows: { label: string; value
   );
 }
 
-export default function StudentCourseDetail({ me }: { me: Me }) {
+export default function StudentCourseDetail() {
+  const me = useMe();
   const { courseId = "" } = useParams();
-  const [data, setData] = useState<Data | null>(null);
-  const [error, setError] = useState("");
-  // เปลี่ยนค่าเพื่อโหลดข้อมูลใหม่
-  const [version, setVersion] = useState(0);
-  const reload = () => setVersion((v) => v + 1);
+  const courseQuery = useCourse(courseId);
+  const roundsQuery = useRounds(courseId);
+  const groupQuery = useMyGroup(courseId);
+  // กลุ่มที่เข้าได้โหลดเฉพาะเมื่อยังไม่มีกลุ่ม
+  const availableQuery = useAvailableGroups(courseId, groupQuery.data === null);
+  const reload = useCourseChanged(courseId);
 
-  useEffect(() => {
-    loadData(courseId)
-      .then(setData)
-      .catch((err) => setError(getErrorMessage(err)));
-  }, [courseId, version]);
+  const course = courseQuery.data;
+  const rounds = roundsQuery.data;
+  const group = groupQuery.data;
+  const available = availableQuery.data;
+  const error = courseQuery.error ?? roundsQuery.error ?? groupQuery.error ?? availableQuery.error;
 
   if (error)
     return (
       <div className="px-4 py-6 min-[900px]:px-10 min-[900px]:py-8">
-        <Alert>{error}</Alert>
+        <Alert>{getErrorMessage(error)}</Alert>
       </div>
     );
-  if (!data)
+  if (!course || !rounds || group === undefined || (group === null && !available))
     return (
       <div className="flex flex-col gap-4 px-4 py-6 min-[900px]:px-10 min-[900px]:py-8" aria-busy="true" aria-label="กำลังโหลด">
         <div className="h-8 w-72 animate-pulse rounded bg-muted" />
@@ -145,7 +130,6 @@ export default function StudentCourseDetail({ me }: { me: Me }) {
       </div>
     );
 
-  const { course, rounds, group, available } = data;
   const now = new Date();
   const contractPending = !!group?.contractText && !group.members.find((m) => m.id === me.id)?.contractAcceptedAt;
 
@@ -191,7 +175,7 @@ export default function StudentCourseDetail({ me }: { me: Me }) {
 
       <div className="flex flex-col items-stretch gap-8 min-[1200px]:flex-row min-[1200px]:items-start">
         <div className="flex min-w-0 flex-1 flex-col gap-5 min-[1200px]:max-w-[760px] min-[1200px]:min-w-[480px]">
-          {!group && <TeamPicker groups={available} onJoined={reload} />}
+          {!group && <TeamPicker groups={available ?? []} onJoined={reload} />}
           {group && contractPending && <ContractCard group={group} onAccepted={reload} />}
 
           <div className="flex items-baseline gap-2">

@@ -1,14 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { BookOpen, Plus, Users } from "lucide-react";
 import { Alert } from "../../components/ui/Alert";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { StatusPill } from "../../components/ui/StatusPill";
-import { api, getErrorMessage } from "../../lib/api";
+import { useInstructorCourses } from "../../hooks/useCourses";
+import { getErrorMessage } from "../../lib/api";
+import { keys } from "../../lib/query-keys";
 import { formatCourseCode, formatTerm } from "../../lib/course";
 import { getRoundStatus } from "../../lib/status";
-import type { ApiResponse, Course } from "../../types";
+import type { Course } from "../../types";
 import CreateCourseModal from "./CreateCourseModal";
 
 function CourseCard({ course }: { course: Course }) {
@@ -50,20 +53,13 @@ function CourseCard({ course }: { course: Course }) {
 }
 
 export default function CourseDashboard() {
-  const [courses, setCourses] = useState<Course[] | null>(null);
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
+  const { data: courses, error } = useInstructorCourses();
   const [creating, setCreating] = useState(false);
-
-  useEffect(() => {
-    api
-      .get<ApiResponse<Course[]>>("/courses")
-      .then((res) => setCourses(res.data.data.filter((c) => c.role === "instructor")))
-      .catch((err) => setError(getErrorMessage(err)));
-  }, []);
 
   function handleCreated(course: Course) {
     setCreating(false);
-    setCourses((prev) => [course, ...(prev ?? [])]);
+    queryClient.setQueryData<Course[]>(keys.courses, (prev) => [course, ...(prev ?? [])]);
   }
 
   const createButton = (
@@ -80,9 +76,7 @@ export default function CourseDashboard() {
         {courses && courses.length > 0 && createButton}
       </div>
 
-      {error && (
-        <Alert>{error}</Alert>
-      )}
+      {error && <Alert>{getErrorMessage(error)}</Alert>}
 
       {!courses && !error && (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-label="กำลังโหลด">

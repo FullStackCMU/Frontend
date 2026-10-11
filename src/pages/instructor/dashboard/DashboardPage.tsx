@@ -1,94 +1,79 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { EyeOff, LayoutDashboard, TriangleAlert } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { Card } from "../../../components/ui/Card";
 import { inputClass } from "../../../components/ui/field-styles";
 import { StatusPill } from "../../../components/ui/StatusPill";
-import { api, getErrorMessage } from "../../../lib/api";
-import { cn } from "../../../lib/cn";
+import { useInstructorCourses } from "../../../hooks/useCourses";
+import { useRoundOverview } from "../../../hooks/useRoundOverview";
+import { useRounds } from "../../../hooks/useRounds";
+import { getErrorMessage } from "../../../lib/api";
 import { formatCourseCode, formatTerm } from "../../../lib/course";
 import { formatDateTime, formatRange } from "../../../lib/date";
-import { getRoundStatus, type SubmissionStatus } from "../../../lib/status";
-import type { ApiResponse, Course, CourseRound, OverviewRow, RoundOverview } from "../../../types";
+import { groupsByAttention } from "../../../lib/signals";
+import { getRoundStatus } from "../../../lib/status";
+import type { Course, CourseRound } from "../../../types";
 import ReleaseControls from "../ReleaseControls";
+import GroupCards from "./GroupCards";
+import GroupView from "./GroupView";
 import StudentDetailModal from "./StudentDetailModal";
-
-// ≥ 37.5% ของช่วงสเกล (1.5 คะแนนบน 1–5) — เป็นสัดส่วนเพราะแต่ละรอบตั้งสเกลต่างกันได้
-const GAP_RATIO = 0.375;
-function isLargeGap(peer: number | null, self: number | null, min: number, max: number) {
-  if (peer === null || self === null) return false;
-  return Math.abs(self - peer) / (max - min) >= GAP_RATIO;
-}
-
-function submissionStatus(row: OverviewRow): SubmissionStatus {
-  return row.submission?.status ?? "not_submitted";
-}
 
 function defaultRoundId(course: Course | undefined, rounds: CourseRound[]) {
   return course?.currentRound?.id ?? rounds[0]?.id ?? "";
 }
 
+// ไม่มี group ใน URL = ภาพรวมทุกกลุ่ม, มี = หน้ากลุ่มนั้น
 export default function DashboardPage() {
   const [params, setParams] = useSearchParams();
-  const [courses, setCourses] = useState<Course[] | null>(null);
-  const [rounds, setRounds] = useState<CourseRound[] | null>(null);
-  const [overview, setOverview] = useState<RoundOverview | null>(null);
-  const [error, setError] = useState("");
   const [detailOf, setDetailOf] = useState<string | null>(null);
 
+  const coursesQuery = useInstructorCourses();
+  const courses = coursesQuery.data;
   const courseId = params.get("course") ?? courses?.[0]?.id ?? "";
   const course = courses?.find((c) => c.id === courseId);
+
+  const roundsQuery = useRounds(courseId);
+  const rounds = roundsQuery.data;
   const roundId = params.get("round") ?? (rounds ? defaultRoundId(course, rounds) : "");
   const round = rounds?.find((r) => r.id === roundId);
 
-  useEffect(() => {
-    api
-      .get<ApiResponse<Course[]>>("/courses")
-      .then((res) => setCourses(res.data.data.filter((c) => c.role === "instructor")))
-      .catch((err) => setError(getErrorMessage(err)));
-  }, []);
+  const overviewQuery = useRoundOverview(roundId);
+  const overview = overviewQuery.data;
 
-  useEffect(() => {
-    if (!courseId) return;
-    setRounds(null);
-    api
-      .get<ApiResponse<CourseRound[]>>(`/rounds?courseId=${courseId}`)
-      .then((res) => setRounds(res.data.data))
-      .catch((err) => setError(getErrorMessage(err)));
-  }, [courseId]);
+  // เทียบได้เฉพาะรอบก่อนหน้า — เปลี่ยนรอบแล้วค่าใน URL ใช้ไม่ได้ก็ถือว่าไม่เทียบ
+  const earlierRounds = rounds?.filter((r) => round && r.sequenceNo < round.sequenceNo).reverse() ?? [];
+  const compareRound = earlierRounds.find((r) => r.id === params.get("compare"));
+  const compareQuery = useRoundOverview(compareRound?.id ?? "");
+  const error = coursesQuery.error ?? roundsQuery.error ?? overviewQuery.error ?? compareQuery.error;
 
-  useEffect(() => {
-    if (!roundId) return;
-    setOverview(null);
-    api
-      .get<ApiResponse<RoundOverview>>(`/feedback/rounds/${roundId}/overview`)
-      .then((res) => setOverview(res.data.data))
-      .catch((err) => setError(getErrorMessage(err)));
-  }, [roundId]);
+  const groupId = params.get("group");
+  const groups = overview ? groupsByAttention(overview) : [];
+  const group = groups.find((g) => g.id === groupId);
+
+  // คงตัวเลือกอื่นใน URL ไว้ (กลุ่ม, มุมมองแผนภาพ, รอบที่เทียบ) — null = เอาออก
+  const withParams = (changes: Record<string, string | null>) => {
+    const next = new URLSearchParams(params);
+    next.set("course", courseId);
+    next.set("round", roundId);
+    for (const [key, value] of Object.entries(changes))
+      if (value === null) next.delete(key);
+      else next.set(key, value);
+    return `?${next}`;
+  };
 
   function selectCourse(id: string) {
     setParams({ course: id });
   }
+  // กลุ่มเป็นของวิชา เปลี่ยนรอบแล้วยังดูกลุ่มเดิมต่อได้
   function selectRound(id: string) {
-    setParams({ course: courseId, round: id });
-  }
-
-  // ต้องอัปเดตหัวของ overview ด้วย ไม่งั้นสถานะเผยแพร่ไม่ตรง
-  function handleReleased(next: CourseRound[]) {
-    setRounds(next);
-    const updated = next.find((r) => r.id === roundId);
-    if (updated && overview)
-      setOverview({
-        ...overview,
-        round: { ...overview.round, scoresReleasedAt: updated.scoresReleasedAt, feedbackReleasedAt: updated.feedbackReleasedAt },
-      });
+    setParams(withParams({ round: id }));
   }
 
   if (error)
     return (
       <div className="px-4 py-6 min-[900px]:px-10 min-[900px]:py-8">
-        <Alert>{error}</Alert>
+        <Alert>{getErrorMessage(error)}</Alert>
       </div>
     );
 
@@ -107,7 +92,6 @@ export default function DashboardPage() {
 
   const status = round && getRoundStatus(round);
   const canRelease = status === "closed" || status === "released";
-  const scale = overview?.round;
 
   return (
     <div className="px-4 py-6 min-[900px]:px-10 min-[900px]:py-8">
@@ -151,7 +135,7 @@ export default function DashboardPage() {
         </Alert>
       )}
 
-      {round && status && (
+      {round && status && !group && (
         <Card className="mb-6 flex flex-col gap-4">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -167,7 +151,7 @@ export default function DashboardPage() {
           </div>
           <div className="border-t border-border pt-4">
             {canRelease ? (
-              <ReleaseControls round={round} onUpdated={handleReleased} />
+              <ReleaseControls round={round} />
             ) : (
               <p className="text-xs text-muted-foreground">เผยแพร่ผลได้หลังปิดรับ ({formatDateTime(round.closesAt)})</p>
             )}
@@ -179,101 +163,25 @@ export default function DashboardPage() {
         <div className="h-64 animate-pulse rounded-2xl border border-border bg-card" aria-busy="true" aria-label="กำลังโหลด" />
       )}
 
-      {overview && scale && (
-        <>
-          <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
-            <span>
-              <span className="font-bold text-foreground">ตัวเลขใหญ่</span> = เฉลี่ยจากเพื่อน,{" "}
-              <span className="font-bold text-foreground">ตัวเล็ก</span> = ให้ตัวเอง (สเกล {scale.scaleMin}–{scale.scaleMax})
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block size-3 rounded border border-amber-300 bg-amber-100" /> ให้ตัวเองต่างจากเพื่อนมาก
-            </span>
-            {canRelease && (
-              <span className="flex items-center gap-1">
-                <EyeOff size={12} /> ผู้ประเมินไม่ถึง {overview.minPeers} คน — นักศึกษาไม่เห็นผลของตัวเอง
-              </span>
-            )}
-          </div>
-
-          <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-            <table className="w-full min-w-[720px] text-left text-sm whitespace-nowrap">
-              <thead>
-                <tr className="border-b border-border bg-muted text-xs text-muted-foreground">
-                  <th className="px-4 py-3 font-semibold">นักศึกษา</th>
-                  <th className="px-3 py-3 font-semibold">สถานะ</th>
-                  {overview.questions.map((q) => (
-                    <th key={q.id} className="px-3 py-3 text-center font-semibold" title={q.prompt}>
-                      <span className="block">ข้อ {q.orderNo}</span>
-                      <span className="mx-auto block max-w-[9rem] truncate font-normal">{q.prompt}</span>
-                    </th>
-                  ))}
-                  <th className="px-3 py-3 text-center font-semibold">ผู้ประเมิน</th>
-                </tr>
-              </thead>
-              {overview.groups.map((g) => {
-                const submitted = g.rows.filter((r) => r.submission?.status === "submitted").length;
-                return (
-                  <tbody key={g.id ?? "none"}>
-                    <tr className="border-b border-border bg-secondary/60">
-                      <th colSpan={overview.questions.length + 3} scope="colgroup" className="px-4 py-2 text-xs font-semibold text-secondary-foreground">
-                        {g.name}
-                        <span className="ml-2 font-normal text-muted-foreground">
-                          ส่งแล้ว {submitted}/{g.rows.length}
-                        </span>
-                      </th>
-                    </tr>
-                    {g.rows.map((row) => {
-                      const below = canRelease && row.peerCount < overview.minPeers;
-                      return (
-                        <tr key={row.student.id} className="border-b border-border transition-colors last:border-b-0 hover:bg-muted/60">
-                          <td className="px-4 py-2.5">
-                            <button
-                              type="button"
-                              onClick={() => setDetailOf(row.student.id)}
-                              className="text-left font-medium text-foreground hover:text-primary hover:underline"
-                            >
-                              {row.student.name}
-                            </button>
-                            <span className="block font-mono text-[11px] text-muted-foreground">{row.student.studentId}</span>
-                          </td>
-                          <td className="px-3 py-2.5">
-                            <StatusPill status={submissionStatus(row)} />
-                          </td>
-                          {row.scores.map((s) => {
-                            const gap = isLargeGap(s.peerAverage, s.selfScore, scale.scaleMin, scale.scaleMax);
-                            return (
-                              <td
-                                key={s.questionId}
-                                className={cn("px-3 py-2.5 text-center", gap && "bg-amber-50")}
-                                title={gap ? "ให้คะแนนตัวเองต่างจากที่เพื่อนให้มาก" : undefined}
-                              >
-                                <span className="block font-mono text-base font-bold text-foreground">
-                                  {s.peerAverage?.toFixed(1) ?? "—"}
-                                </span>
-                                <span className={cn("flex items-center justify-center gap-0.5 font-mono text-[11px]", gap ? "font-semibold text-amber-700" : "text-muted-foreground")}>
-                                  {gap && <TriangleAlert size={10} />}
-                                  ตัวเอง {s.selfScore ?? "—"}
-                                </span>
-                              </td>
-                            );
-                          })}
-                          <td className="px-3 py-2.5 text-center">
-                            <span className={cn("inline-flex items-center gap-1 font-mono", below ? "text-amber-700" : "text-foreground")}>
-                              {below && <EyeOff size={12} aria-label="นักศึกษาไม่เห็นผล" />}
-                              {row.peerCount}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                );
-              })}
-            </table>
-          </div>
-        </>
-      )}
+      {overview &&
+        (group ? (
+          <GroupView
+            overview={overview}
+            groups={groups}
+            group={group}
+            canRelease={canRelease}
+            linkTo={(id) => withParams({ group: id ?? null })}
+            mapMode={params.get("map") === "focus" ? "focus" : "self"}
+            onMapModeChange={(mode) => setParams(withParams({ map: mode === "focus" ? mode : null }), { replace: true })}
+            earlierRounds={earlierRounds}
+            compareRound={compareRound}
+            compare={compareQuery.data}
+            onCompareChange={(id) => setParams(withParams({ compare: id }), { replace: true })}
+            onOpenStudent={setDetailOf}
+          />
+        ) : (
+          <GroupCards overview={overview} courseId={courseId} linkTo={(id) => withParams({ group: id })} />
+        ))}
 
       {detailOf && roundId && <StudentDetailModal roundId={roundId} studentId={detailOf} onClose={() => setDetailOf(null)} />}
     </div>

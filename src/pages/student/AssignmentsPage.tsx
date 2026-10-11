@@ -1,15 +1,16 @@
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ClipboardList } from "lucide-react";
 import { Alert } from "../../components/ui/Alert";
 import { buttonClass } from "../../components/ui/button-variants";
 import { Card } from "../../components/ui/Card";
 import { StatusPill } from "../../components/ui/StatusPill";
-import { api, getErrorMessage } from "../../lib/api";
+import { useAssignments } from "../../hooks/useRounds";
+import { getErrorMessage } from "../../lib/api";
 import { cn } from "../../lib/cn";
 import { formatCourseCode } from "../../lib/course";
 import { formatDateTime } from "../../lib/date";
-import type { ApiResponse, Assignment } from "../../types";
+import type { Assignment } from "../../types";
 
 const HOUR = 60 * 60 * 1000;
 
@@ -114,15 +115,7 @@ function SubmittedCard({ a }: { a: Assignment }) {
 }
 
 export default function AssignmentsPage() {
-  const [items, setItems] = useState<Assignment[] | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api
-      .get<ApiResponse<Assignment[]>>("/rounds/assignments")
-      .then((res) => setItems(res.data.data))
-      .catch((err) => setError(getErrorMessage(err)));
-  }, []);
+  const { data: items, error } = useAssignments();
 
   const todo = items?.filter((a) => a.mySubmission?.status !== "submitted") ?? [];
   const submitted = items?.filter((a) => a.mySubmission?.status === "submitted") ?? [];
@@ -131,7 +124,7 @@ export default function AssignmentsPage() {
     <div className="px-4 py-6 min-[900px]:px-10 min-[900px]:py-8">
       <h1 className="mb-8 text-2xl font-bold text-foreground">แบบประเมิน</h1>
 
-      {error && <Alert>{error}</Alert>}
+      {error && <Alert>{getErrorMessage(error)}</Alert>}
 
       {!items && !error && (
         <div className="grid grid-cols-1 gap-5 min-[900px]:grid-cols-2" aria-busy="true" aria-label="กำลังโหลด">

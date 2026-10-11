@@ -16,7 +16,7 @@ import {
   CONSENT_ROWS,
   type ConsentIcon,
 } from "../lib/consent-policy";
-import type { ConsentStatus } from "../types";
+import { useSessionStore } from "../stores/useSessionStore";
 
 const ICONS: Record<ConsentIcon, LucideIcon> = {
   file: FileText,
@@ -38,13 +38,9 @@ function ConsentLogo({ size }: { size: number }) {
   );
 }
 
-export default function ConsentPage({
-  onAccepted,
-  onDecline,
-}: {
-  onAccepted: (status: ConsentStatus) => void;
-  onDecline: () => void;
-}) {
+export default function ConsentPage() {
+  const onAccepted = useSessionStore((s) => s.setConsent);
+  const onDecline = useSessionStore((s) => s.logout);
   const [checked, setChecked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");

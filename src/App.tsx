@@ -1,7 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { fetchConsent, fetchMe, logout, UNAUTHORIZED_EVENT } from "./lib/api";
 import { isStaff } from "./lib/user";
+import { useSessionStore } from "./stores/useSessionStore";
 import { Button } from "./components/ui/Button";
 import { LogoMark } from "./components/ui/Brand";
 import AppLayout from "./components/layout/AppLayout";
@@ -17,26 +17,10 @@ import FeedbackPage from "./pages/student/feedback/FeedbackPage";
 import CourseDashboard from "./pages/instructor/CourseDashboard";
 import CourseDetail from "./pages/instructor/course/CourseDetail";
 import DashboardPage from "./pages/instructor/dashboard/DashboardPage";
-import type { ConsentStatus, Me } from "./types";
 
 const UiPreview = import.meta.env.DEV
   ? lazy(() => import("./pages/dev/UiPreview"))
   : null;
-
-type Session =
-  | { status: "loading" }
-  | { status: "error" }
-  | { status: "anonymous" }
-  // consent = null → ไม่ต้องขอ (บุคลากร — consent ครอบคลุมข้อความที่นักศึกษาเขียนเท่านั้น)
-  | { status: "authenticated"; me: Me; consent: ConsentStatus | null };
-
-// cookie เป็น httpOnly อ่านจาก JS ไม่ได้ ต้องถาม backend
-async function loadSession(): Promise<Session> {
-  const me = await fetchMe();
-  if (!me) return { status: "anonymous" };
-  const consent = isStaff(me) ? null : await fetchConsent();
-  return { status: "authenticated", me, consent };
-}
 
 function FullScreen({ children }: { children: React.ReactNode }) {
   return (
@@ -47,32 +31,8 @@ function FullScreen({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const [session, setSession] = useState<Session>({ status: "loading" });
+  const session = useSessionStore((s) => s.session);
   const location = useLocation();
-
-  useEffect(() => {
-    let cancelled = false;
-    loadSession()
-      .then((s) => !cancelled && setSession(s))
-      .catch(() => !cancelled && setSession({ status: "error" }));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    function onUnauthorized() {
-      setSession({ status: "anonymous" });
-    }
-    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
-    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
-  }, []);
-
-  // oauth497 ยังจำ session — login ใหม่จะได้บัญชีเดิม (ไม่รองรับ end-session)
-  async function handleLogout() {
-    await logout().catch(() => {});
-    setSession({ status: "anonymous" });
-  }
 
   if (UiPreview && location.pathname === "/dev/ui") {
     return (
@@ -117,15 +77,7 @@ function App() {
   if (consent && !consent.accepted) {
     return (
       <Routes>
-        <Route
-          path="/consent"
-          element={
-            <ConsentPage
-              onAccepted={(accepted) => setSession({ ...session, consent: accepted })}
-              onDecline={handleLogout}
-            />
-          }
-        />
+        <Route path="/consent" element={<ConsentPage />} />
         <Route path="*" element={<Navigate to="/consent" replace />} />
       </Routes>
     );
@@ -141,11 +93,9 @@ function App() {
       <Route
         element={
           <AppLayout
-            me={me}
             nav={staff ? STAFF_NAV : STUDENT_NAV}
             mobileNav={staff ? "drawer" : "bottom"}
             roleLabel={staff ? "อาจารย์" : "นักศึกษา"}
-            onLogout={handleLogout}
           />
         }
       >
@@ -162,7 +112,7 @@ function App() {
             <Route index element={<Navigate to="/assignments" replace />} />
             <Route path="/assignments" element={<AssignmentsPage />} />
             <Route path="/courses" element={<MyCoursesPage />} />
-            <Route path="/courses/:courseId" element={<StudentCourseDetail me={me} />} />
+            <Route path="/courses/:courseId" element={<StudentCourseDetail />} />
             <Route path="/courses/:courseId/rounds/:roundId/*" element={<EvaluationFlow />} />
             <Route path="/feedback" element={<FeedbackListPage />} />
             <Route path="/feedback/:roundId" element={<FeedbackPage />} />

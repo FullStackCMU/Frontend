@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CalendarClock, Pencil, Plus, Trash2 } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { ConfirmModal } from "../../../components/ui/ConfirmModal";
 import { StatusPill } from "../../../components/ui/StatusPill";
+import { useRounds, useSetRounds } from "../../../hooks/useRounds";
 import { api, getErrorMessage } from "../../../lib/api";
 import { formatRange } from "../../../lib/date";
 import { getRoundStatus } from "../../../lib/status";
@@ -43,12 +44,10 @@ function RoundCard({
   round,
   onEdit,
   onDelete,
-  onUpdated,
 }: {
   round: CourseRound;
   onEdit: () => void;
   onDelete: () => void;
-  onUpdated: (rounds: CourseRound[]) => void;
 }) {
   const status = getRoundStatus(round);
   const released = !!(round.scoresReleasedAt || round.feedbackReleasedAt);
@@ -98,7 +97,7 @@ function RoundCard({
 
       {canRelease && (
         <div className="border-t border-border pt-4">
-          <ReleaseControls round={round} onUpdated={onUpdated} />
+          <ReleaseControls round={round} />
         </div>
       )}
     </Card>
@@ -106,20 +105,12 @@ function RoundCard({
 }
 
 export default function RoundsTab({ courseId }: { courseId: string }) {
-  const [rounds, setRounds] = useState<CourseRound[] | null>(null);
-  const [error, setError] = useState("");
+  const { data: rounds, error } = useRounds(courseId);
+  const setRounds = useSetRounds(courseId);
   const [generating, setGenerating] = useState(false);
   const [editing, setEditing] = useState<CourseRound | null>(null);
   const [pending, setPending] = useState<Pending>(null);
 
-  useEffect(() => {
-    api
-      .get<ApiResponse<CourseRound[]>>(`/rounds?courseId=${courseId}`)
-      .then((res) => setRounds(res.data.data))
-      .catch((err) => setError(getErrorMessage(err)));
-  }, [courseId]);
-
-  // endpoint คืนรอบทั้งวิชา (เลขรอบอาจเลื่อนหลังลบ)
   function applyRounds(next: CourseRound[]) {
     setRounds(next);
     setGenerating(false);
@@ -133,7 +124,7 @@ export default function RoundsTab({ courseId }: { courseId: string }) {
     applyRounds(res.data.data);
   }
 
-  if (error) return <Alert>{error}</Alert>;
+  if (error) return <Alert>{getErrorMessage(error)}</Alert>;
   if (!rounds)
     return (
       <div className="flex flex-col gap-3" aria-busy="true" aria-label="กำลังโหลด">
@@ -181,7 +172,6 @@ export default function RoundsTab({ courseId }: { courseId: string }) {
                 round={r}
                 onEdit={() => setEditing(r)}
                 onDelete={() => setPending({ round: r })}
-                onUpdated={applyRounds}
               />
             ))}
           </div>
