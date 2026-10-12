@@ -1,7 +1,7 @@
 import { Button } from "../../components/ui/Button";
 import { buttonClass } from "../../components/ui/button-variants";
 import { Card } from "../../components/ui/Card";
-import { StatusDot, StatusPill } from "../../components/ui/StatusPill";
+import { StatusLabel } from "../../components/ui/StatusLabel";
 import { Avatar } from "../../components/ui/Avatar";
 import { Brand, LogoMark } from "../../components/ui/Brand";
 import { Breadcrumb } from "../../components/ui/Breadcrumb";
@@ -53,13 +53,10 @@ export default function UiPreview() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold">StatusPill (mapping เดียว)</h2>
-        <div className="flex flex-wrap gap-2">
+        <h2 className="text-lg font-bold">StatusLabel (mapping เดียว)</h2>
+        <div className="flex flex-wrap gap-4">
           {(Object.keys(STATUS) as Status[]).map((s) => (
-            <span key={s} className="flex items-center gap-1.5">
-              <StatusDot status={s} />
-              <StatusPill status={s} />
-            </span>
+            <StatusLabel key={s} status={s} />
           ))}
         </div>
       </section>
@@ -70,7 +67,7 @@ export default function UiPreview() {
           {ROUND_SAMPLES.map(({ label, ...round }) => (
             <div key={label} className="flex items-center justify-between px-5 py-3 text-sm">
               <span>{label}</span>
-              <StatusPill status={getRoundStatus(round)} />
+              <StatusLabel status={getRoundStatus(round)} />
             </div>
           ))}
         </Card>

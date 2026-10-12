@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Check, ChevronRight, Lock, Quote } from "lucide-react";
+import { Check, ChevronRight, Lock, MessageSquareText, Quote } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { Breadcrumb } from "../../../components/ui/Breadcrumb";
 import { buttonClass } from "../../../components/ui/button-variants";
@@ -261,6 +261,16 @@ export default function FeedbackPage() {
       <div className="flex flex-col items-start gap-8 min-[1200px]:flex-row">
         <div className="flex w-full min-w-0 flex-1 flex-col gap-5 min-[1200px]:max-w-[760px] min-[1200px]:min-w-[480px]">
           {left}
+          {data.instructorNote && (
+            <Section title="ฟีดแบ็กจากอาจารย์" icon={<MessageSquareText size={14} className="text-indigo-500" />}>
+              <div className="px-6 py-5">
+                <p className="text-[15px] leading-relaxed whitespace-pre-line text-foreground">{data.instructorNote.body}</p>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {data.instructorNote.authorName} · {formatDateTime(data.instructorNote.updatedAt)}
+                </p>
+              </div>
+            </Section>
+          )}
           <div>
             <Link to={`/courses/${course.id}`} className={buttonClass({ variant: "outline" })}>
               กลับหน้าวิชา

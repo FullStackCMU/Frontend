@@ -1,3 +1,5 @@
+import { Calendar, Check, Circle, CircleCheck, Clock, Lock, PencilLine, type LucideIcon } from "lucide-react";
+
 // คำนวณจากวันที่ — DB ไม่มีคอลัมน์ status
 export type RoundStatus = "upcoming" | "open" | "closed" | "released";
 
@@ -5,31 +7,26 @@ export type SubmissionStatus = "not_submitted" | "draft" | "submitted";
 
 export type Status = RoundStatus | SubmissionStatus;
 
-type Tone = "neutral" | "info" | "warning" | "success";
+export type Tone = "neutral" | "info" | "warning" | "danger" | "success";
 
-export const TONE_CLASS: Record<Tone, string> = {
-  neutral: "bg-muted text-muted-foreground border-border",
-  info: "bg-secondary text-secondary-foreground border-indigo-200",
-  warning: "bg-amber-50 text-amber-700 border-amber-200",
-  success: "bg-emerald-50 text-emerald-700 border-emerald-200",
+// สีอยู่ที่ไอคอนเท่านั้น ข้อความเป็นสีเทา
+export const TONE_ICON: Record<Tone, string> = {
+  neutral: "text-zinc-400",
+  info: "text-primary",
+  warning: "text-amber-500",
+  danger: "text-red-600",
+  success: "text-emerald-600",
 };
 
-export const TONE_DOT: Record<Tone, string> = {
-  neutral: "bg-zinc-300",
-  info: "bg-primary",
-  warning: "bg-amber-400",
-  success: "bg-emerald-500",
-};
+export const STATUS: Record<Status, { label: string; tone: Tone; icon: LucideIcon }> = {
+  upcoming: { label: "ยังไม่เปิด", tone: "neutral", icon: Calendar },
+  open: { label: "เปิดรับ", tone: "info", icon: Clock },
+  closed: { label: "ปิดรับแล้ว", tone: "warning", icon: Lock },
+  released: { label: "เผยแพร่ผลแล้ว", tone: "success", icon: CircleCheck },
 
-export const STATUS: Record<Status, { label: string; tone: Tone }> = {
-  upcoming: { label: "ยังไม่เปิด", tone: "neutral" },
-  open: { label: "เปิดรับ", tone: "info" },
-  closed: { label: "ปิดรับแล้ว", tone: "warning" },
-  released: { label: "เผยแพร่ผลแล้ว", tone: "success" },
-
-  not_submitted: { label: "ยังไม่ส่ง", tone: "neutral" },
-  draft: { label: "ทำค้างไว้", tone: "warning" },
-  submitted: { label: "ส่งแล้ว", tone: "success" },
+  not_submitted: { label: "ยังไม่ส่ง", tone: "neutral", icon: Circle },
+  draft: { label: "ทำค้างไว้", tone: "warning", icon: PencilLine },
+  submitted: { label: "ส่งแล้ว", tone: "success", icon: Check },
 };
 
 type DateLike = Date | string | null | undefined;
@@ -74,5 +71,4 @@ export function getStudentRoundStatus(
 
 export const STUDENT_LABEL: Partial<Record<Status, string>> = {
   closed: "ปิดแล้ว",
-  released: "ดูผลได้",
 };

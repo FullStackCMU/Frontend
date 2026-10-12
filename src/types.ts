@@ -104,10 +104,6 @@ export interface AvailableGroup {
   members: { id: string; name: string }[];
 }
 
-export interface CourseStudent extends Person {
-  group: { id: string; name: string } | null;
-}
-
 export interface GroupsOverview {
   groups: Group[];
   unassigned: Person[];
@@ -240,6 +236,15 @@ export interface RoundFeedback {
     | null;
   overall: OverallScore | null;
   comments: { questionId: string; orderNo: number; prompt: string; comments: string[] }[] | null;
+  // เผยแพร่พร้อมความเห็นจากเพื่อน แต่ไม่ถูกซ่อนด้วย withheldReason
+  instructorNote: InstructorNote | null;
+}
+
+// ฟีดแบ็กจากอาจารย์ถึงนักศึกษารายคน หนึ่งข้อความต่อรอบ — authorName = อาจารย์คนล่าสุดที่แก้
+export interface InstructorNote {
+  body: string;
+  updatedAt: string;
+  authorName: string;
 }
 
 export interface Assignment extends CourseRef {
@@ -264,6 +269,8 @@ export interface OverviewRow {
   overall: OverallScore;
   // เฉลี่ยคะแนนจากเพื่อนเฉพาะมิติด้านงาน / ด้านทีม
   focus: { task: number | null; team: number | null };
+  // อาจารย์เขียนฟีดแบ็กถึงคนนี้ในรอบนี้แล้ว
+  hasNote: boolean;
 }
 
 // ตรงกับ Backend/src/lib/insights.ts — value = ค่าของนักศึกษาคนนั้น, reference = ค่าที่เอามาเทียบ
@@ -333,4 +340,7 @@ export interface StudentFeedbackDetail {
       studentAction: "pending" | "edited" | "ignored";
     }[];
   };
+  note: InstructorNote | null;
+  // false = รอบยังไม่ปิดรับ
+  canWriteNote: boolean;
 }

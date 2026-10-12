@@ -1,16 +1,21 @@
-import { Quote, Sparkles, TriangleAlert } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Check, Circle, MessageSquareText, Send, Sparkles } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
+import { buttonClass } from "../../../components/ui/button-variants";
 import { Modal } from "../../../components/ui/Modal";
+import { ToneLabel } from "../../../components/ui/StatusLabel";
 import { useStudentFeedback } from "../../../hooks/useRoundOverview";
 import { getErrorMessage } from "../../../lib/api";
 import { cn } from "../../../lib/cn";
+import { formatDateTime } from "../../../lib/date";
 import { FLAG_LABEL } from "../../../lib/evaluation";
 import type { StudentFeedbackDetail } from "../../../types";
+import StudentComments from "./StudentComments";
 
 const ACTION_LABEL = {
-  edited: { label: "แก้แล้ว", className: "bg-emerald-50 text-emerald-700" },
-  ignored: { label: "ส่งตามนี้", className: "bg-amber-50 text-amber-700" },
-  pending: { label: "ยังไม่ส่ง", className: "bg-muted text-muted-foreground" },
+  edited: { label: "แก้แล้ว", tone: "success", icon: Check },
+  ignored: { label: "ส่งตามนี้", tone: "warning", icon: Send },
+  pending: { label: "ยังไม่ส่ง", tone: "neutral", icon: Circle },
 } as const;
 
 function WrittenFlags({ flags }: { flags: StudentFeedbackDetail["writtenFlags"] }) {
@@ -37,9 +42,9 @@ function WrittenFlags({ flags }: { flags: StudentFeedbackDetail["writtenFlags"] 
                   ข้อ {f.questionNo ?? "?"} ถึง {f.isSelf ? "ตัวเอง" : (f.evaluateeName ?? "—")}
                 </span>
                 <span className="font-medium text-foreground">{FLAG_LABEL[f.category]}</span>
-                <span className={cn("rounded-full px-2 py-0.5 font-medium", ACTION_LABEL[f.studentAction].className)}>
+                <ToneLabel tone={ACTION_LABEL[f.studentAction].tone} icon={ACTION_LABEL[f.studentAction].icon}>
                   {ACTION_LABEL[f.studentAction].label}
-                </span>
+                </ToneLabel>
               </li>
             ))}
           </ul>
@@ -49,11 +54,42 @@ function WrittenFlags({ flags }: { flags: StudentFeedbackDetail["writtenFlags"] 
   );
 }
 
+// หน้าภาพรวมดูอย่างเดียว — ที่นี่แค่แสดงฟีดแบ็กที่เขียนไว้ การเขียนอยู่ที่หน้าฟีดแบ็ก
+function InstructorNote({ data, to }: { data: StudentFeedbackDetail; to: string }) {
+  return (
+    <section className="flex flex-col gap-2 rounded-xl border border-border px-4 py-3">
+      <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+        <MessageSquareText size={13} className="text-indigo-500" />
+        ฟีดแบ็กจากอาจารย์
+      </h3>
+      {data.note ? (
+        <>
+          <p className="text-sm leading-relaxed whitespace-pre-line text-foreground">{data.note.body}</p>
+          <p className="text-xs text-muted-foreground">
+            {data.note.authorName} · {formatDateTime(data.note.updatedAt)}
+          </p>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          {data.canWriteNote ? "ยังไม่ได้เขียนในรอบนี้" : "เขียนได้หลังรอบปิดรับ"}
+        </p>
+      )}
+      {data.canWriteNote && (
+        <Link to={to} className={cn(buttonClass({ variant: "secondary", size: "sm" }), "self-start")}>
+          {data.note ? "แก้ไขที่หน้าฟีดแบ็ก" : "เขียนที่หน้าฟีดแบ็ก"}
+        </Link>
+      )}
+    </section>
+  );
+}
+
 export default function StudentDetailModal({
+  courseId,
   roundId,
   studentId,
   onClose,
 }: {
+  courseId: string;
   roundId: string;
   studentId: string;
   onClose: () => void;
@@ -61,7 +97,6 @@ export default function StudentDetailModal({
   const { data, error } = useStudentFeedback(roundId, studentId);
 
   const ratingQs = data?.questions.filter((q) => q.type === "rating") ?? [];
-  const textQs = data?.questions.filter((q) => q.type === "text") ?? [];
 
   return (
     <Modal title={data ? data.student.name : "รายละเอียดนักศึกษา"} size="xl" onClose={onClose}>
@@ -124,43 +159,13 @@ export default function StudentDetailModal({
                   </ul>
                 </section>
 
-                {textQs.map((q) => (
-                  <section key={q.id} className="flex flex-col gap-2">
-                    <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                      <Quote size={13} className="text-indigo-500" />
-                      {q.prompt}
-                    </h3>
-                    <ul className="flex flex-col gap-2">
-                      {data.evaluations.map((e) => {
-                        const answer = e.answers.find((a) => a.questionId === q.id);
-                        const comment = answer?.comment;
-                        if (!comment) return null;
-                        return (
-                          <li
-                            key={e.evaluator.id}
-                            className={cn("rounded-xl px-4 py-3 text-sm leading-relaxed", e.evaluator.isSelf ? "bg-secondary" : "bg-muted")}
-                          >
-                            <p className="mb-1 text-xs font-semibold text-muted-foreground">
-                              {e.evaluator.name}
-                              {e.evaluator.isSelf && " (เขียนถึงตัวเอง)"}
-                            </p>
-                            <p className="text-foreground">{comment}</p>
-                            {answer?.ignoredWarning && (
-                              <p className="mt-1.5 flex items-center gap-1 text-xs text-amber-700">
-                                <TriangleAlert size={12} className="shrink-0" />
-                                AI เตือนว่าอาจ{FLAG_LABEL[answer.ignoredWarning]} ผู้เขียนเลือกส่งตามนี้
-                              </p>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </section>
-                ))}
+                <StudentComments data={data} />
               </>
             )}
 
             <WrittenFlags flags={data.writtenFlags} />
+
+            <InstructorNote data={data} to={`/courses/${courseId}/feedback?round=${roundId}&student=${studentId}`} />
           </>
         )}
       </div>

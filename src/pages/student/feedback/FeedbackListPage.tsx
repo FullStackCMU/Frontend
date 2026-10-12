@@ -1,26 +1,20 @@
 import { Link } from "react-router-dom";
-import { Check, MessageSquare } from "lucide-react";
+import { Check, CircleDashed, MessageSquare } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { buttonClass } from "../../../components/ui/button-variants";
 import { Card } from "../../../components/ui/Card";
+import { ToneLabel } from "../../../components/ui/StatusLabel";
 import { useFeedbackList } from "../../../hooks/useFeedback";
 import { getErrorMessage } from "../../../lib/api";
-import { cn } from "../../../lib/cn";
 import { formatCourseCode } from "../../../lib/course";
 import { formatDateTime } from "../../../lib/date";
 
 function ReleasedChip({ label, on }: { label: string; on: boolean }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold",
-        on ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-border bg-muted text-muted-foreground"
-      )}
-    >
-      {on && <Check size={11} />}
+    <ToneLabel tone={on ? "success" : "neutral"} icon={on ? Check : CircleDashed}>
       {label}
       {!on && " (ยังไม่เผยแพร่)"}
-    </span>
+    </ToneLabel>
   );
 }
 
@@ -65,7 +59,7 @@ export default function FeedbackListPage() {
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">เผยแพร่ {formatDateTime(item.releasedAt)}</p>
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
                 <ReleasedChip label="คะแนน" on={!!item.scoresReleasedAt} />
                 <ReleasedChip label="ความเห็นจากเพื่อน" on={!!item.feedbackReleasedAt} />
               </div>

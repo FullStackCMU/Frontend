@@ -66,9 +66,7 @@ function TargetHeader({ target, badge }: { target: EvalTarget; badge?: string })
         <p className="truncate text-sm font-semibold text-foreground">{target.name}</p>
         {target.isSelf && <p className="text-xs font-medium text-primary">ตัวคุณเอง</p>}
       </div>
-      {badge && (
-        <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs font-bold text-primary">{badge}</span>
-      )}
+      {badge && <span className="shrink-0 font-mono text-sm font-bold text-primary">{badge}</span>}
     </div>
   );
 }
@@ -149,19 +147,20 @@ function RatingCard({
   );
 }
 
+// บรรทัดเดียวใต้ช่อง — ตัวอย่างการเขียนใหม่กางออกเมื่อกด
 function CommentWarningBox({
   warning,
   acknowledged,
-  onEdit,
   onUseSuggestion,
   onAcknowledge,
 }: {
   warning: CommentWarning;
   acknowledged: boolean;
-  onEdit: () => void;
   onUseSuggestion: () => void;
   onAcknowledge: (value: boolean) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const linkClass = "font-medium text-primary hover:underline";
   if (acknowledged)
     return (
       <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -173,31 +172,31 @@ function CommentWarningBox({
       </p>
     );
   return (
-    <div role="alert" className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm">
-      <p className="flex items-center gap-1.5 font-semibold text-amber-800">
-        <TriangleAlert size={14} className="shrink-0" />
-        ข้อความนี้อาจ{FLAG_LABEL[warning.category]}
-      </p>
-      <p className="mt-1 text-xs leading-relaxed text-amber-800">
-        ระบบ AI ตรวจแล้วคิดว่าผู้อ่านอาจเสียความรู้สึก ลองเขียนถึงพฤติกรรมที่อยากให้ปรับแทน
-      </p>
-      <div className="mt-2 rounded-lg bg-card px-3 py-2 text-foreground">
-        <p className="mb-0.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
-          <Sparkles size={11} /> ตัวอย่างการเขียนใหม่
-        </p>
-        <p className="leading-relaxed">{warning.suggestion}</p>
-      </div>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button size="sm" variant="secondary" onClick={onEdit}>
-          แก้ข้อความ
-        </Button>
-        <Button size="sm" variant="ghost" onClick={onUseSuggestion}>
-          ใช้ตัวอย่างนี้
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => onAcknowledge(true)}>
+    <div role="alert" className="mt-2 text-sm">
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-foreground">
+        <TriangleAlert size={14} className="shrink-0 text-amber-500" />
+        AI เตือนว่าอาจ{FLAG_LABEL[warning.category]}
+        <span aria-hidden="true" className="text-muted-foreground">
+          ·
+        </span>
+        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className={linkClass}>
+          {open ? "ซ่อนตัวอย่าง" : "ดูตัวอย่างการเขียน"}
+        </button>
+        <span aria-hidden="true" className="text-muted-foreground">
+          ·
+        </span>
+        <button type="button" onClick={() => onAcknowledge(true)} className={linkClass}>
           ส่งตามนี้
-        </Button>
-      </div>
+        </button>
+      </p>
+      {open && (
+        <p className="mt-1 ml-[22px] leading-relaxed text-muted-foreground">
+          {warning.suggestion}{" "}
+          <button type="button" onClick={onUseSuggestion} className={cn(linkClass, "whitespace-nowrap")}>
+            ใช้ตัวอย่างนี้
+          </button>
+        </p>
+      )}
     </div>
   );
 }
@@ -238,14 +237,18 @@ function CommentField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={target.isSelf ? "เขียนถึงตัวเอง..." : "เขียนถึงเพื่อนคนนี้..."}
-        aria-invalid={over || (!!warning && !acknowledged) || undefined}
-        className={cn(inputClass, "min-h-[88px] resize-none leading-relaxed field-sizing-content")}
+        aria-invalid={over || undefined}
+        // เตือนจาก AI ใช้ขอบเหลือง ไม่ใช่แดง — แดงเก็บไว้ให้ข้อผิดพลาดจริง (ยาวเกิน)
+        data-warn={(!!warning && !acknowledged) || undefined}
+        className={cn(
+          inputClass,
+          "min-h-[88px] resize-none leading-relaxed field-sizing-content data-warn:border-amber-400 data-warn:focus:ring-amber-400"
+        )}
       />
       {warning && (
         <CommentWarningBox
           warning={warning}
           acknowledged={acknowledged}
-          onEdit={focusField}
           onUseSuggestion={() => {
             onChange(warning.suggestion);
             focusField();
@@ -289,19 +292,16 @@ function ReviewStep({
           return (
             <div key={s.question.id} className="rounded-2xl border border-border bg-card px-4 py-4">
               {header(i)}
-              <ul className="flex flex-wrap gap-2">
+              <ul className="flex flex-wrap gap-x-5 gap-y-1.5">
                 {data.targets.map((t) => {
                   const score = answers[answerKey(s.question.id, t.id)]?.score ?? null;
                   return (
-                    <li
-                      key={t.id}
-                      className={cn(
-                        "flex items-center gap-2 rounded-full border px-3 py-1 text-xs",
-                        score === null ? "border-amber-300 bg-amber-50 text-amber-800" : "border-border bg-muted text-foreground"
-                      )}
-                    >
-                      <span>{nameOf(t)}</span>
-                      <span className="font-mono font-bold">{score ?? "ยังไม่ให้"}</span>
+                    <li key={t.id} className="flex items-center gap-1.5 text-xs">
+                      {score === null && <TriangleAlert size={13} aria-hidden="true" className="shrink-0 text-amber-500" />}
+                      <span className="text-muted-foreground">{nameOf(t)}</span>
+                      <span className={cn("font-mono font-bold", score === null ? "text-amber-700" : "text-foreground")}>
+                        {score ?? "ยังไม่ให้"}
+                      </span>
                     </li>
                   );
                 })}
