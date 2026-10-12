@@ -345,7 +345,7 @@ function ReviewStep({
   );
 }
 
-const DECIDE_NOTICE = "มีความเห็นที่ AI แนะนำให้ทบทวน — เลือก “แก้ข้อความ” หรือ “ส่งตามนี้” ก่อนไปต่อ";
+const DECIDE_NOTICE = "มีความเห็นที่ AI แนะนำให้ทบทวน — แก้ข้อความ หรือกด “ส่งตามนี้” ก่อนไปต่อ";
 
 // AI ตรวจตอนกดถัดไปจากหน้าความเห็น (เฉพาะข้อความที่เปลี่ยน) และตอนกดส่ง
 export default function EvaluationPage({
@@ -519,7 +519,7 @@ export default function EvaluationPage({
       setConfirming(false);
       const first = questions.find((q) => data.targets.some((t) => needsDecision(answerKey(q.id, t.id), latest)));
       if (first && stepOf(first.id) !== index) navigateTo(stepOf(first.id));
-      setWarningNotice("มีความเห็นที่ AI แนะนำให้ทบทวนก่อนส่ง — เลือก “แก้ข้อความ” หรือ “ส่งตามนี้” แล้วกดส่งอีกครั้ง");
+      setWarningNotice("มีความเห็นที่ AI แนะนำให้ทบทวนก่อนส่ง — แก้ข้อความ หรือกด “ส่งตามนี้” แล้วกดส่งอีกครั้ง");
       return;
     }
     // blocker ไม่ว่างแล้ว EvaluationFlow จะพากลับหน้าแรกของรอบเอง
