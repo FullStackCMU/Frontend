@@ -7,7 +7,6 @@ import { api, getErrorMessage } from "../../../lib/api";
 import { cn } from "../../../lib/cn";
 import { parseStudentCsv, readCsvFile, type StudentCsvRow } from "../../../lib/csv";
 import type { ApiResponse, ImportResult } from "../../../types";
-import { TEMPLATE_CSV_URL } from "./StudentsTab";
 
 type Stage =
   | { kind: "pick"; error?: string }
@@ -22,6 +21,8 @@ function Stat({ label, value, tone }: { label: string; value: number; tone: stri
     </div>
   );
 }
+
+export const TEMPLATE_CSV_URL = "/students-template.csv";
 
 export default function UploadStudentsModal({
   courseId,

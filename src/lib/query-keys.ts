@@ -4,7 +4,6 @@ export const keys = {
   course: (courseId: string) => ["course", courseId] as const,
   courseInfo: (courseId: string) => ["course", courseId, "info"] as const,
   rounds: (courseId: string) => ["course", courseId, "rounds"] as const,
-  students: (courseId: string) => ["course", courseId, "students"] as const,
   groups: (courseId: string) => ["course", courseId, "groups"] as const,
   myGroup: (courseId: string) => ["course", courseId, "my-group"] as const,
   availableGroups: (courseId: string) => ["course", courseId, "available-groups"] as const,

@@ -1,79 +1,75 @@
 import { useState } from "react";
-import { Check } from "lucide-react";
-import { Button } from "../../components/ui/Button";
 import { ConfirmModal } from "../../components/ui/ConfirmModal";
 import { useReleaseRound } from "../../hooks/useRounds";
+import { cn } from "../../lib/cn";
 import { formatDateTime } from "../../lib/date";
 import type { CourseRound } from "../../types";
 
 type ReleaseKind = "scores" | "feedback";
 
-const RELEASE_TEXT: Record<ReleaseKind, { label: string; released: string; effect: string }> = {
+const RELEASE_TEXT: Record<ReleaseKind, { label: string; effect: string }> = {
   scores: {
     label: "คะแนน",
-    released: "เผยแพร่คะแนนแล้ว",
     effect: "นักศึกษาจะเห็นคะแนนเฉลี่ยรายข้อของตัวเอง",
   },
   feedback: {
     label: "ฟีดแบ็ก",
-    released: "เผยแพร่ฟีดแบ็กแล้ว",
     effect: "นักศึกษาจะเห็นความเห็นจากเพื่อนร่วมกลุ่มแบบไม่ระบุชื่อ",
   },
 };
 
-// ใช้ได้เฉพาะรอบที่ปิดรับแล้ว — ผู้เรียกต้องเช็คก่อนแสดง
-export default function ReleaseControls({ round }: { round: CourseRound }) {
-  const [pending, setPending] = useState<{ what: ReleaseKind; release: boolean } | null>(null);
+// สวิตช์เปิด/ปิดการเผยแพร่ ถามยืนยันก่อนเปลี่ยนทุกครั้ง — enabled = รอบปิดรับแล้ว
+export function ReleaseSwitch({ round, what, enabled }: { round: CourseRound; what: ReleaseKind; enabled: boolean }) {
+  // ค่าที่กำลังจะเปลี่ยนไป (null = ไม่ได้ถาม)
+  const [pending, setPending] = useState<boolean | null>(null);
   const release = useReleaseRound(round);
+  const at = what === "scores" ? round.scoresReleasedAt : round.feedbackReleasedAt;
+  const { label, effect } = RELEASE_TEXT[what];
 
   async function confirm() {
-    if (!pending) return;
-    await release.mutateAsync({ [pending.what]: pending.release });
+    if (pending === null) return;
+    await release.mutateAsync({ [what]: pending });
     setPending(null);
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {(["scores", "feedback"] as const).map((what) => {
-        const at = what === "scores" ? round.scoresReleasedAt : round.feedbackReleasedAt;
-        const text = RELEASE_TEXT[what];
-        return at ? (
-          <div
-            key={what}
-            className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-1.5 pr-1.5 pl-3 text-xs text-emerald-700"
-          >
-            <Check size={13} className="shrink-0" />
-            <span>
-              <span className="font-semibold">{text.released}</span>
-              <span className="text-emerald-600"> · {formatDateTime(at)}</span>
-            </span>
-            <Button variant="ghost" size="sm" onClick={() => setPending({ what, release: false })}>
-              ยกเลิก
-            </Button>
-          </div>
-        ) : (
-          <Button key={what} variant="secondary" size="sm" onClick={() => setPending({ what, release: true })}>
-            เผยแพร่{text.label}
-          </Button>
-        );
-      })}
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={!!at}
+        aria-label={`เผยแพร่${label}รอบที่ ${round.sequenceNo}`}
+        disabled={!enabled}
+        title={enabled ? undefined : "เผยแพร่ได้หลังรอบปิดรับ"}
+        onClick={() => setPending(!at)}
+        className={cn(
+          "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-40",
+          at ? "bg-primary" : "bg-zinc-300"
+        )}
+      >
+        <span
+          className={cn(
+            "inline-block size-4 rounded-full bg-white shadow transition-transform",
+            at ? "translate-x-[18px]" : "translate-x-0.5"
+          )}
+        />
+      </button>
+      <span className="text-xs whitespace-nowrap text-muted-foreground">
+        {at ? formatDateTime(at) : enabled ? "ยังไม่เผยแพร่" : "หลังปิดรับ"}
+      </span>
 
-      {pending && (
+      {pending !== null && (
         <ConfirmModal
-          title={
-            pending.release
-              ? `เผยแพร่${RELEASE_TEXT[pending.what].label}รอบที่ ${round.sequenceNo}?`
-              : `ยกเลิกการเผยแพร่${RELEASE_TEXT[pending.what].label}รอบที่ ${round.sequenceNo}?`
-          }
-          confirmLabel={pending.release ? "เผยแพร่" : "ยกเลิกการเผยแพร่"}
-          danger={!pending.release}
+          title={`${pending ? "เผยแพร่" : "ยกเลิกการเผยแพร่"}${label}รอบที่ ${round.sequenceNo}?`}
+          confirmLabel={pending ? "เผยแพร่" : "ยกเลิกการเผยแพร่"}
+          danger={!pending}
           onConfirm={confirm}
           onClose={() => setPending(null)}
         >
           <p>
-            {pending.release
-              ? `${RELEASE_TEXT[pending.what].effect} (นักศึกษาที่มีผู้ประเมินไม่ถึง 2 คนจะไม่เห็นผลเพื่อรักษาความเป็นนิรนาม)`
-              : `นักศึกษาจะมองไม่เห็น${RELEASE_TEXT[pending.what].label}ของรอบนี้จนกว่าจะเผยแพร่อีกครั้ง`}
+            {pending
+              ? `${effect} (นักศึกษาที่มีผู้ประเมินไม่ถึง 2 คนจะไม่เห็นผลเพื่อรักษาความเป็นนิรนาม)`
+              : `นักศึกษาจะมองไม่เห็น${label}ของรอบนี้จนกว่าจะเผยแพร่อีกครั้ง`}
           </p>
         </ConfirmModal>
       )}

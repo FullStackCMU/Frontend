@@ -10,6 +10,8 @@ const GHOST_R = 4;
 // จุดที่คะแนนเต็มไม่ไปชนขอบและไม่ทับป้ายช่อง
 const DOMAIN_PAD = 0.25;
 const LABEL_H = 14;
+// ดูทั้งวิชาแล้วมีจุดมากกว่านี้ ไม่ติดชื่อ (ดูจาก tooltip แทน)
+const MAX_LABELS_ALL = 8;
 
 // ลำดับช่อง: บนซ้าย, บนขวา, ล่างซ้าย, ล่างขวา
 const WASHES = ["fill-sky-500/[0.06]", "fill-emerald-500/[0.06]", "fill-red-500/[0.06]", "fill-amber-500/[0.06]"];
@@ -86,6 +88,9 @@ function textWidth(text: string, charWidth: number) {
 type Dot = {
   id: string;
   name: string;
+  groupName: string | null;
+  // อยู่นอกกลุ่มที่เลือก — แสดงจางเป็นฉากหลังให้เห็นว่ากลุ่มนี้อยู่ตรงไหนของวิชา
+  dim: boolean;
   vx: number;
   vy: number;
   peerCount: number;
@@ -96,10 +101,10 @@ type Dot = {
 };
 
 // วางชื่อรอบจุดในตำแหน่งแรกที่ไม่ทับจุดอื่น ชื่ออื่น หรือป้ายช่อง — วางไม่ได้ก็ไม่แสดง (ยังดูได้จาก tooltip และตาราง)
-function placeLabels(dots: Dot[], plot: Rect, obstacles: Rect[]) {
+function placeLabels(targets: Dot[], dots: Dot[], plot: Rect, obstacles: Rect[]) {
   const taken = [...obstacles, ...dots.flatMap((d) => (d.from ? [around(d.from.x, d.from.y, GHOST_R)] : []))];
   const placed = new Map<string, { x: number; y: number }>();
-  for (const d of dots) {
+  for (const d of targets) {
     const w = textWidth(d.name, 7.2) + 2;
     const g = DOT_R + 4;
     const candidates: Rect[] = [
@@ -134,7 +139,8 @@ export default function TeamMap({
   onOpenStudent,
 }: {
   overview: RoundOverview;
-  group: NamedGroup;
+  // null = ทั้งวิชา
+  group: NamedGroup | null;
   mode: MapMode;
   onModeChange: (mode: MapMode) => void;
   earlierRounds: CourseRound[];
@@ -160,12 +166,15 @@ export default function TeamMap({
 
   const view = MODES[mode];
   const [medianX, medianY] = view.medians(overview.section);
-  const plotted = group.rows.flatMap((row) => {
-    const vx = view.x(row);
-    const vy = view.y(row);
-    return vx === null || vy === null ? [] : [{ row, vx, vy }];
+  const students = overview.groups.flatMap((g) =>
+    g.rows.map((row) => ({ row, groupName: g.id === null ? null : g.name, dim: group !== null && g.id !== group.id }))
+  );
+  const plotted = students.flatMap((s) => {
+    const vx = view.x(s.row);
+    const vy = view.y(s.row);
+    return vx === null || vy === null ? [] : [{ ...s, vx, vy }];
   });
-  const missing = group.rows.filter((row) => view.x(row) === null || view.y(row) === null);
+  const missing = students.filter((s) => !s.dim && (view.x(s.row) === null || view.y(s.row) === null)).map((s) => s.row);
 
   // แกนเดียวกันทุกกลุ่มในรอบนี้ (และรอบที่เทียบ) สลับกลุ่มแล้วตำแหน่งเทียบกันได้
   const hi = overview.round.scaleMax;
@@ -196,12 +205,17 @@ export default function TeamMap({
     return {
       id: p.row.student.id,
       name: p.row.student.name.split(" ")[0],
+      groupName: p.groupName,
+      dim: p.dim,
       vx: p.vx,
       vy: p.vy,
       peerCount: p.row.peerCount,
       x: sx(p.vx) + shift,
       y: sy(p.vy),
-      from: fx !== null && fy !== null && (fx !== p.vx || fy !== p.vy) ? { vx: fx, vy: fy, x: sx(fx), y: sy(fy) } : null,
+      from:
+        !p.dim && fx !== null && fy !== null && (fx !== p.vx || fy !== p.vy)
+          ? { vx: fx, vy: fy, x: sx(fx), y: sy(fy) }
+          : null,
     };
   });
 
@@ -231,13 +245,16 @@ export default function TeamMap({
       fits: w + 10 <= quadrantRects[i].w,
     };
   });
-  const labels = ready
-    ? placeLabels(
-        dots,
-        plot,
-        quadrantLabels.filter((q) => q.fits).map((q) => q.rect)
-      )
-    : new Map<string, { x: number; y: number }>();
+  const focused = dots.filter((d) => !d.dim);
+  const labels =
+    ready && (group !== null || focused.length <= MAX_LABELS_ALL)
+      ? placeLabels(
+          focused,
+          dots,
+          plot,
+          quadrantLabels.filter((q) => q.fits).map((q) => q.rect)
+        )
+      : new Map<string, { x: number; y: number }>();
   const tip = dots.find((d) => d.id === active);
   const compareLabel = compareRound ? `รอบที่ ${compareRound.sequenceNo}` : "";
   const focusNames = (focus: "task" | "team") =>
@@ -248,46 +265,47 @@ export default function TeamMap({
 
   return (
     <Card className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-        <div>
-          <h3 className="text-sm font-bold text-foreground">แผนภาพทีม</h3>
-          <p className="text-[11px] text-muted-foreground">{view.subtitle} · กดที่จุดเพื่อดูรายคน</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {earlierRounds.length > 0 && (
-            <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              เทียบกับ
-              <select
-                value={compareRound?.id ?? ""}
-                onChange={(e) => onCompareChange(e.target.value || null)}
-                className="rounded-lg border border-border bg-card px-2 py-1 text-xs text-foreground"
-              >
-                <option value="">ไม่เทียบ</option>
-                {earlierRounds.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    รอบที่ {r.sequenceNo}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <div role="group" aria-label="มุมมองแผนภาพ" className="flex overflow-hidden rounded-lg border border-border">
-            {(Object.keys(MODES) as MapMode[]).map((m) => (
-              <button
-                key={m}
-                type="button"
-                aria-pressed={mode === m}
-                onClick={() => onModeChange(m)}
-                className={cn(
-                  "px-2.5 py-1 text-xs font-semibold transition-colors",
-                  mode === m ? "bg-primary text-primary-foreground" : "bg-card text-foreground hover:bg-muted"
-                )}
-              >
-                {MODES[m].tab}
-              </button>
-            ))}
+      {/* คำอธิบายอยู่คนละบรรทัดกับปุ่ม — ความยาวที่ต่างกันของแต่ละมุมมองจะไม่ดันปุ่มให้ย้ายที่ */}
+      <div>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <h3 className="text-sm font-bold text-foreground">{group ? `แผนภาพทีม ${group.name}` : "แผนภาพทั้งวิชา"}</h3>
+          <div className="flex flex-wrap items-center gap-3">
+            {earlierRounds.length > 0 && (
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                เทียบกับ
+                <select
+                  value={compareRound?.id ?? ""}
+                  onChange={(e) => onCompareChange(e.target.value || null)}
+                  className="rounded-lg border border-border bg-card px-2 py-1 text-xs text-foreground"
+                >
+                  <option value="">ไม่เทียบ</option>
+                  {earlierRounds.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      รอบที่ {r.sequenceNo}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <div role="group" aria-label="มุมมองแผนภาพ" className="flex overflow-hidden rounded-lg border border-border">
+              {(Object.keys(MODES) as MapMode[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  aria-pressed={mode === m}
+                  onClick={() => onModeChange(m)}
+                  className={cn(
+                    "px-2.5 py-1 text-xs font-semibold transition-colors",
+                    mode === m ? "bg-primary text-primary-foreground" : "bg-card text-foreground hover:bg-muted"
+                  )}
+                >
+                  {MODES[m].tab}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
+        <p className="mt-1 text-[11px] text-muted-foreground">{view.subtitle} · กดที่จุดเพื่อดูรายคน</p>
       </div>
 
       <div ref={container} className="relative">
@@ -297,7 +315,7 @@ export default function TeamMap({
               width={width}
               height={height}
               role="group"
-              aria-label={`แผนภาพทีม ${group.name}: ${view.subtitle}`}
+              aria-label={`แผนภาพ${group ? `ทีม ${group.name}` : "ทั้งวิชา"}: ${view.subtitle}`}
               className="block"
             >
               {quadrantRects.map((r, i) => (
@@ -360,14 +378,14 @@ export default function TeamMap({
                   )
               )}
 
-              {dots.map((d) => {
+              {[...dots.filter((d) => d.dim), ...focused].map((d) => {
                 const label = labels.get(d.id);
                 return (
                   <g
                     key={d.id}
                     role="button"
                     tabIndex={0}
-                    aria-label={`${d.name} ${view.short[0]} ${d.vx.toFixed(1)} ${view.short[1]} ${d.vy.toFixed(1)}`}
+                    aria-label={`${d.name}${d.groupName ? ` ${d.groupName}` : ""} ${view.short[0]} ${d.vx.toFixed(1)} ${view.short[1]} ${d.vy.toFixed(1)}`}
                     className="cursor-pointer outline-none"
                     onClick={() => onOpenStudent(d.id)}
                     onKeyDown={(e) => {
@@ -386,7 +404,7 @@ export default function TeamMap({
                       cy={d.y}
                       r={active === d.id ? DOT_R + 1.5 : DOT_R}
                       strokeWidth={2}
-                      className="fill-primary stroke-card transition-[r]"
+                      className={cn("stroke-card transition-[r]", d.dim ? "fill-zinc-300" : "fill-primary")}
                     />
                     {label && (
                       <text x={label.x} y={label.y} className="fill-foreground text-xs font-semibold">
@@ -418,7 +436,10 @@ export default function TeamMap({
                     {compareLabel}: {tip.from.vx.toFixed(1)} · {tip.from.vy.toFixed(1)}
                   </p>
                 )}
-                <p className="mt-0.5 font-semibold text-foreground">{tip.name}</p>
+                <p className="mt-0.5 font-semibold text-foreground">
+                  {tip.name}
+                  {tip.groupName && <span className="font-normal text-muted-foreground"> · {tip.groupName}</span>}
+                </p>
               </div>
             )}
           </>
@@ -450,7 +471,14 @@ export default function TeamMap({
       )}
       {ready && missing.length > 0 && (
         <p className="text-[11px] text-muted-foreground">
-          ไม่อยู่ในแผนภาพ: {missing.map((r) => `${r.student.name.split(" ")[0]} (${view.missing(r)})`).join(", ")}
+          {group
+            ? `ไม่อยู่ในแผนภาพ: ${missing.map((r) => `${r.student.name.split(" ")[0]} (${view.missing(r)})`).join(", ")}`
+            : `ไม่อยู่ในแผนภาพ ${missing.length} คน (ยังไม่มีคะแนนครบทั้งสองแกน)`}
+        </p>
+      )}
+      {ready && group && dots.some((d) => d.dim) && (
+        <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <span className="inline-block size-2.5 rounded-full bg-zinc-300" /> จุดสีเทา = นักศึกษากลุ่มอื่นในวิชา
         </p>
       )}
 

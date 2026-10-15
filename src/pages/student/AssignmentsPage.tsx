@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ClipboardList } from "lucide-react";
+import { AlarmClock, ClipboardList, Hourglass } from "lucide-react";
 import { Alert } from "../../components/ui/Alert";
 import { buttonClass } from "../../components/ui/button-variants";
 import { Card } from "../../components/ui/Card";
-import { StatusPill } from "../../components/ui/StatusPill";
+import { StatusLabel, ToneLabel } from "../../components/ui/StatusLabel";
 import { useAssignments } from "../../hooks/useRounds";
 import { getErrorMessage } from "../../lib/api";
 import { cn } from "../../lib/cn";
@@ -59,15 +59,13 @@ function TodoCard({ a }: { a: Assignment }) {
     <Card padding="none" className="flex h-full flex-col gap-3 px-5 py-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <Heading a={a} />
-        <span
-          className={cn(
-            "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
-            critical ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"
-          )}
+        <ToneLabel
+          tone={critical ? "danger" : "warning"}
+          icon={critical ? AlarmClock : Hourglass}
           title={`ปิดรับ ${formatDateTime(a.closesAt)}`}
         >
           {critical ? "ปิดวันนี้" : `เหลือ ${Math.ceil(hoursLeft / 24)} วัน`}
-        </span>
+        </ToneLabel>
       </div>
 
       {answered > 0 && (
@@ -104,7 +102,7 @@ function SubmittedCard({ a }: { a: Assignment }) {
     <Card padding="none" className="flex h-full flex-col gap-3 px-5 py-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <Heading a={a} />
-        <StatusPill status="submitted" />
+        <StatusLabel status="submitted" />
       </div>
       <div className="flex-1" />
       <p className="text-xs text-muted-foreground">

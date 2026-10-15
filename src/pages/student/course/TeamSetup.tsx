@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { CircleCheck, FileText, LogOut, Users } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { ChevronRight, CircleCheck, FileText, LogOut, Users } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Button } from "../../../components/ui/Button";
@@ -31,6 +31,10 @@ export function TeamPicker({
     }
   }
 
+  const isFull = (g: AvailableGroup) => g.maxMembers !== null && g.members.length >= g.maxMembers;
+  const open = groups.filter((g) => !isFull(g));
+  const full = groups.filter(isFull);
+
   return (
     <Card className="flex flex-col gap-4 border-amber-200">
       <div>
@@ -43,46 +47,60 @@ export function TeamPicker({
       {groups.length === 0 ? (
         <p className="text-sm text-muted-foreground">อาจารย์ยังไม่ได้สร้างกลุ่มในวิชานี้</p>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2">
-          {groups.map((g) => {
-            const full = g.maxMembers !== null && g.members.length >= g.maxMembers;
-            return (
-              <li key={g.id} className={cn("flex flex-col gap-3 rounded-xl border border-border p-4", full && "bg-muted/60")}>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-foreground">{g.name}</p>
-                    <p className={cn("text-xs", full ? "font-semibold text-amber-700" : "text-muted-foreground")}>
-                      {g.members.length}
-                      {g.maxMembers !== null ? ` / ${g.maxMembers}` : ""} คน{full ? " · เต็ม" : ""}
-                    </p>
-                  </div>
-                  {g.contractText && (
-                    <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
-                      <FileText size={12} />
-                      มีข้อตกลง
-                    </span>
-                  )}
-                </div>
-                {g.members.length > 0 && (
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    {g.members.map((m) => m.name).join(", ")}
-                  </p>
-                )}
-                <Button
-                  size="sm"
-                  variant={full ? "outline" : "primary"}
-                  disabled={full || joining !== null}
-                  onClick={() => join(g.id)}
-                  className="mt-auto"
-                >
-                  {full ? "กลุ่มเต็มแล้ว" : joining === g.id ? "กำลังเข้ากลุ่ม..." : "เข้ากลุ่มนี้"}
-                </Button>
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          {open.length === 0 ? (
+            <p className="text-sm text-muted-foreground">ทุกกลุ่มเต็มแล้ว แจ้งอาจารย์เพื่อเพิ่มกลุ่มหรือเพิ่มจำนวนสมาชิก</p>
+          ) : (
+            <ul className="divide-y divide-border rounded-xl border border-border">
+              {open.map((g) => (
+                <GroupRow key={g.id} group={g}>
+                  <Button size="sm" disabled={joining !== null} onClick={() => join(g.id)} className="shrink-0">
+                    {joining === g.id ? "กำลังเข้ากลุ่ม..." : "เข้ากลุ่ม"}
+                  </Button>
+                </GroupRow>
+              ))}
+            </ul>
+          )}
+          {/* กลุ่มที่เต็มเข้าไม่ได้ จึงพับไว้ให้รายการสั้น */}
+          {full.length > 0 && (
+            <details className="group text-sm">
+              <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
+                <ChevronRight size={14} className="transition-transform group-open:rotate-90" />
+                กลุ่มที่เต็มแล้ว {full.length} กลุ่ม
+              </summary>
+              <ul className="mt-2 divide-y divide-border rounded-xl border border-border bg-muted/60">
+                {full.map((g) => (
+                  <GroupRow key={g.id} group={g} />
+                ))}
+              </ul>
+            </details>
+          )}
+        </>
       )}
     </Card>
+  );
+}
+
+// หนึ่งกลุ่ม = หนึ่งแถว เพื่อให้วิชาที่มีหลายสิบกลุ่มยังอ่านได้ในจอเดียว
+function GroupRow({ group: g, children }: { group: AvailableGroup; children?: ReactNode }) {
+  return (
+    <li className="flex items-center gap-3 px-4 py-2.5">
+      <p className="flex min-w-0 flex-1 items-center gap-2">
+        <span className="truncate text-sm font-semibold text-foreground">{g.name}</span>
+        {/* รายชื่อสมาชิกอยู่ใน tooltip ของจำนวนคน ไม่แสดงในแถว */}
+        <span className="shrink-0 text-xs text-muted-foreground" title={g.members.map((m) => m.name).join(", ") || undefined}>
+          {g.members.length}
+          {g.maxMembers !== null ? ` / ${g.maxMembers}` : ""} คน
+        </span>
+        {g.contractText && (
+          <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+            <FileText size={12} />
+            มีข้อตกลง
+          </span>
+        )}
+      </p>
+      {children}
+    </li>
   );
 }
 

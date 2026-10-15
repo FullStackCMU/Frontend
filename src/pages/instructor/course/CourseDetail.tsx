@@ -1,29 +1,23 @@
-import { useState } from "react";
-import { Link, Navigate, NavLink, Route, Routes, useParams } from "react-router-dom";
-import { ChevronLeft, Upload } from "lucide-react";
+import { Link, Navigate, NavLink, Route, Routes, useLocation, useParams } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 import { Alert } from "../../../components/ui/Alert";
-import { Button } from "../../../components/ui/Button";
-import { useCourse, useCourseChanged } from "../../../hooks/useCourses";
+import { COURSE_SECTIONS } from "../../../components/layout/nav";
+import { useCourse } from "../../../hooks/useCourses";
 import { getErrorMessage } from "../../../lib/api";
 import { cn } from "../../../lib/cn";
 import { formatCourseCode, formatTerm } from "../../../lib/course";
-import StudentsTab from "./StudentsTab";
-import GroupsTab from "./GroupsTab";
+import CourseOverview from "../dashboard/CourseOverview";
+import FeedbackTab from "./FeedbackTab";
+import MembersTab from "./MembersTab";
 import RoundsTab from "./RoundsTab";
-import UploadStudentsModal from "./UploadStudentsModal";
 
 export default function CourseDetail() {
   const { courseId = "" } = useParams();
   const { data: course, error } = useCourse(courseId);
-  const courseChanged = useCourseChanged(courseId);
-  const [uploading, setUploading] = useState(false);
+  const { pathname } = useLocation();
 
   const base = `/courses/${courseId}`;
-  const tabs = [
-    { to: base, label: "นักศึกษา", end: true },
-    { to: `${base}/groups`, label: "กลุ่ม", end: false },
-    { to: `${base}/rounds`, label: "รอบประเมิน", end: false },
-  ];
+  const current = COURSE_SECTIONS.find((s) => s.path && pathname.endsWith(`/${s.path}`)) ?? COURSE_SECTIONS[0];
 
   return (
     <div className="max-w-6xl px-4 py-6 min-[900px]:px-10 min-[900px]:py-8">
@@ -46,26 +40,20 @@ export default function CourseDetail() {
 
       {course && (
         <>
-          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="mb-1 text-xs font-semibold tracking-widest text-primary uppercase">
-                {formatCourseCode(course.courseCode, course.section)} ·{" "}
-                {formatTerm(course.semester, course.academicYear)}
-              </p>
-              <h1 className="text-2xl font-bold text-foreground">{course.title}</h1>
-            </div>
-            <Button variant="secondary" onClick={() => setUploading(true)}>
-              <Upload size={14} />
-              อัปโหลดรายชื่อ (CSV)
-            </Button>
+          <div className="mb-6">
+            <p className="mb-1 text-xs font-semibold tracking-widest text-primary uppercase">
+              {formatCourseCode(course.courseCode, course.section)} · {formatTerm(course.semester, course.academicYear)}
+            </p>
+            <h1 className="text-2xl font-bold text-foreground">{course.title}</h1>
           </div>
 
-          <nav aria-label="แท็บรายวิชา" className="mb-8 flex gap-1 border-b border-border">
-            {tabs.map((tab) => (
+          {/* จอกว้างเลือกหัวข้อจากเมนูซ้าย — แท็บนี้มีเฉพาะจอแคบที่เมนูซ้ายถูกซ่อน */}
+          <nav aria-label="หัวข้อของวิชา" className="mb-8 flex gap-1 border-b border-border min-[900px]:hidden">
+            {COURSE_SECTIONS.map((s) => (
               <NavLink
-                key={tab.to}
-                to={tab.to}
-                end={tab.end}
+                key={s.path}
+                to={s.path ? `${base}/${s.path}` : base}
+                end={!s.path}
                 className={({ isActive }) =>
                   cn(
                     "-mb-px shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
@@ -75,28 +63,19 @@ export default function CourseDetail() {
                   )
                 }
               >
-                {tab.label}
+                {s.label}
               </NavLink>
             ))}
           </nav>
+          <h2 className="mb-4 hidden text-lg font-bold text-foreground min-[900px]:block">{current.label}</h2>
 
           <Routes>
-            <Route
-              index
-              element={<StudentsTab courseId={courseId} onUpload={() => setUploading(true)} />}
-            />
-            <Route path="groups" element={<GroupsTab courseId={courseId} />} />
+            <Route index element={<CourseOverview course={course} />} />
+            <Route path="members" element={<MembersTab courseId={courseId} />} />
             <Route path="rounds" element={<RoundsTab courseId={courseId} />} />
+            <Route path="feedback" element={<FeedbackTab course={course} />} />
             <Route path="*" element={<Navigate to={base} replace />} />
           </Routes>
-
-          {uploading && (
-            <UploadStudentsModal
-              courseId={courseId}
-              onClose={() => setUploading(false)}
-              onImported={courseChanged}
-            />
-          )}
         </>
       )}
     </div>

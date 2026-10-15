@@ -5,7 +5,7 @@ import { BookOpen, Plus, Users } from "lucide-react";
 import { Alert } from "../../components/ui/Alert";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
-import { StatusPill } from "../../components/ui/StatusPill";
+import { StatusLabel } from "../../components/ui/StatusLabel";
 import { useInstructorCourses } from "../../hooks/useCourses";
 import { getErrorMessage } from "../../lib/api";
 import { keys } from "../../lib/query-keys";
@@ -31,7 +31,7 @@ function CourseCard({ course }: { course: Course }) {
             {formatTerm(course.semester, course.academicYear)}
           </p>
         </div>
-        {round && <StatusPill status={getRoundStatus(round)} />}
+        {round && <StatusLabel status={getRoundStatus(round)} />}
       </div>
 
       <h2 className="mb-4 flex-1 text-base leading-snug font-bold text-foreground transition-colors group-hover:text-primary">

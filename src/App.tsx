@@ -8,15 +8,15 @@ import AppLayout from "./components/layout/AppLayout";
 import { STAFF_NAV, STUDENT_NAV } from "./components/layout/nav";
 import LoginPage from "./pages/LoginPage";
 import ConsentPage from "./pages/ConsentPage";
-import AssignmentsPage from "./pages/student/AssignmentsPage";
 import MyCoursesPage from "./pages/student/MyCoursesPage";
 import StudentCourseDetail from "./pages/student/course/StudentCourseDetail";
 import EvaluationFlow from "./pages/student/evaluation/EvaluationFlow";
-import FeedbackListPage from "./pages/student/feedback/FeedbackListPage";
 import FeedbackPage from "./pages/student/feedback/FeedbackPage";
 import CourseDashboard from "./pages/instructor/CourseDashboard";
 import CourseDetail from "./pages/instructor/course/CourseDetail";
-import DashboardPage from "./pages/instructor/dashboard/DashboardPage";
+import StaffHome from "./pages/instructor/StaffHome";
+import AssignmentsPage from "./pages/student/AssignmentsPage";
+import FeedbackListPage from "./pages/student/feedback/FeedbackListPage";
 
 const UiPreview = import.meta.env.DEV
   ? lazy(() => import("./pages/dev/UiPreview"))
@@ -101,11 +101,10 @@ function App() {
       >
         {staff ? (
           <>
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route index element={<StaffHome />} />
             <Route path="/courses" element={<CourseDashboard />} />
             <Route path="/courses/:courseId/*" element={<CourseDetail />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </>
         ) : (
           <>

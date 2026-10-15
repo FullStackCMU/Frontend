@@ -57,7 +57,7 @@ export default function RoundLanding({ course, data }: { course: Course; data: E
               ผลประเมินจะแสดงเมื่ออาจารย์เผยแพร่
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2">
+          <div className="flex items-center gap-1.5">
             <Lock size={13} className="shrink-0 text-muted-foreground" />
             <p className="text-xs text-muted-foreground">เพื่อนจะไม่รู้ว่าความเห็นไหนเป็นของคุณ</p>
           </div>

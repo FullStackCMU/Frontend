@@ -3,11 +3,10 @@ import { BookOpen, ChevronRight, Users } from "lucide-react";
 import { Alert } from "../../components/ui/Alert";
 import { buttonClass } from "../../components/ui/button-variants";
 import { Card } from "../../components/ui/Card";
+import { StatusLabel } from "../../components/ui/StatusLabel";
 import { useStudentCourses } from "../../hooks/useCourses";
 import { getErrorMessage } from "../../lib/api";
-import { cn } from "../../lib/cn";
 import { formatCourseCode, formatTerm } from "../../lib/course";
-import { TONE_CLASS } from "../../lib/status";
 import type { Course } from "../../types";
 
 function CourseCard({ course }: { course: Course }) {
@@ -22,9 +21,7 @@ function CourseCard({ course }: { course: Course }) {
           <p className="mt-1 truncate text-xs text-muted-foreground">{course.instructors.join(", ")}</p>
         </div>
         {course.openRoundCount > 0 && (
-          <span className={cn("shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold", TONE_CLASS.info)}>
-            เปิดรับ {course.openRoundCount}
-          </span>
+          <StatusLabel status="open" label={`เปิดรับ ${course.openRoundCount}`} />
         )}
       </div>
 

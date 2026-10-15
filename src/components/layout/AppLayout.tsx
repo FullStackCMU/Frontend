@@ -1,34 +1,81 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useMatch } from "react-router-dom";
 import { LogOut, Menu, X } from "lucide-react";
 import { Avatar } from "../ui/Avatar";
 import { Brand } from "../ui/Brand";
+import { useCourse } from "../../hooks/useCourses";
 import { cn } from "../../lib/cn";
 import { displayName } from "../../lib/user";
 import { useMe, useSessionStore } from "../../stores/useSessionStore";
-import type { NavItem } from "./nav";
+import type { NavItem, NavSection } from "./nav";
 
-function SidebarNav({ nav, onNavigate }: { nav: NavItem[]; onNavigate?: () => void }) {
+function CourseSections({
+  courseId,
+  sections,
+  onNavigate,
+}: {
+  courseId: string;
+  sections: NavSection[];
+  onNavigate?: () => void;
+}) {
+  const { data: course } = useCourse(courseId);
+  const base = `/courses/${courseId}`;
   return (
-    <nav aria-label="เมนูหลัก" className="flex flex-1 flex-col gap-0.5 px-3 py-4">
-      {nav.map(({ to, label, icon: Icon }) => (
+    <div className="mt-0.5 mb-1 ml-[22px] flex flex-col gap-0.5 border-l border-border pl-2.5">
+      <p className="truncate px-2 pt-1 pb-0.5 text-[11px] font-semibold text-muted-foreground" title={course?.title}>
+        {course ? `${course.courseCode} ${course.title}` : "\u00a0"}
+      </p>
+      {sections.map((s) => (
         <NavLink
-          key={to}
-          to={to}
+          key={s.path}
+          to={s.path ? `${base}/${s.path}` : base}
+          end={!s.path}
           onClick={onNavigate}
           className={({ isActive }) =>
             cn(
-              "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "truncate rounded-md px-2 py-1.5 text-sm transition-colors",
               isActive
-                ? "bg-secondary text-primary"
+                ? "bg-secondary font-semibold text-primary"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )
           }
         >
-          <Icon size={16} className="shrink-0" />
-          <span className="flex-1 truncate">{label}</span>
+          {s.label}
         </NavLink>
       ))}
+    </div>
+  );
+}
+
+function SidebarNav({ nav, onNavigate }: { nav: NavItem[]; onNavigate?: () => void }) {
+  const courseId = useMatch("/courses/:courseId/*")?.params.courseId;
+  return (
+    <nav aria-label="เมนูหลัก" className="flex flex-1 flex-col gap-0.5 px-3 py-4">
+      {nav.map(({ to, label, icon: Icon, sections }) => {
+        // เปิดวิชาอยู่ → ไฮไลต์ที่หัวข้อย่อยแทนเมนูหลัก
+        const open = sections && courseId ? { courseId, sections } : null;
+        return (
+          <div key={to}>
+            <NavLink
+              to={to}
+              end={!!open}
+              onClick={onNavigate}
+              className={({ isActive }) =>
+                cn(
+                  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-secondary text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )
+              }
+            >
+              <Icon size={16} className="shrink-0" />
+              <span className="flex-1 truncate">{label}</span>
+            </NavLink>
+            {open && <CourseSections courseId={open.courseId} sections={open.sections} onNavigate={onNavigate} />}
+          </div>
+        );
+      })}
     </nav>
   );
 }

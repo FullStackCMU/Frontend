@@ -1,14 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getData } from "../lib/api";
 import { keys } from "../lib/query-keys";
-import type { AvailableGroup, CourseStudent, GroupsOverview, MyGroup } from "../types";
-
-export function useCourseStudents(courseId: string) {
-  return useQuery({
-    queryKey: keys.students(courseId),
-    queryFn: () => getData<CourseStudent[]>(`/courses/${courseId}/students`),
-  });
-}
+import type { AvailableGroup, GroupsOverview, MyGroup } from "../types";
 
 export function useCourseGroups(courseId: string) {
   return useQuery({
